@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { invoices } from '../lib/db/schema/invoice';
 import { Errors } from '../lib/errors';
@@ -14,7 +15,7 @@ function getStatus(inv: { sentAt: Date | null; paidAt: Date | null; partialPaidA
 }
 
 export class InvoiceService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private getDrizzle() { return drizzle(this.db as any); }

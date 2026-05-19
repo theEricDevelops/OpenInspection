@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq, ne } from 'drizzle-orm';
 import { users } from '../lib/db/schema/tenant';
 import { inspections } from '../lib/db/schema/inspection';
@@ -15,7 +16,7 @@ import { inspections } from '../lib/db/schema/inspection';
  * the underlying DB via the `drizzle-orm/d1` module mock.
  */
 export class IcsService {
-    constructor(private db: D1Database, private host: string = 'openinspection') {}
+    constructor(private db: SqliteDb, private host: string = 'openinspection') {}
 
     private getDrizzle() { return drizzle(this.db); }
 

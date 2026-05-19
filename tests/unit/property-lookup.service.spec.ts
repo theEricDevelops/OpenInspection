@@ -10,7 +10,7 @@
  *   - Address whitespace is trimmed.
  *   - Empty / too-short address rejects with BadRequest.
  */
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach , vi } from 'vitest';
 import { PropertyLookupService } from '../../src/services/property-lookup.service';
 
 describe('PropertyLookupService', () => {

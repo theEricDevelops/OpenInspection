@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq } from 'drizzle-orm';
 import type { HonoConfig } from '../types/hono';
 import { requireRole } from '../lib/middleware/rbac';

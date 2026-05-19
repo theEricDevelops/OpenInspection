@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach , vi } from 'vitest';
 import { EmailService } from '../../src/services/email.service';
 
 describe('EmailService.sendEmail with attachments', () => {

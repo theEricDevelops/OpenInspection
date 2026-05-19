@@ -30,9 +30,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     errorMsg.classList.add('hidden');
 
     try {
-        // Double-submit CSRF: the server issued __Host-csrf_token on GET /login; we echo it
+        // Double-submit CSRF: the server issued a csrf token cookie on GET /login; we echo it
         // as X-CSRF-Token so the server can verify the request originated from its own page.
-        const csrf = getCookie('__Host-csrf_token');
+        const csrf = getCookie('__Host-csrf_token') || getCookie('csrf_token');
         const res = await fetch('/api/auth/login', {
             method: 'POST',
             headers: {
@@ -117,7 +117,7 @@ if (twofaForm) {
         errorMsg.classList.add('hidden');
 
         try {
-            const csrf = getCookie('__Host-csrf_token');
+            const csrf = getCookie('__Host-csrf_token') || getCookie('csrf_token');
             const res = await fetch('/api/auth/login/2fa', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },

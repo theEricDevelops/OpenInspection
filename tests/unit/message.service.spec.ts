@@ -1,12 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, } from 'vitest';
 import { MessageService } from '../../src/services/message.service';
 import { createTestDb, setupSchema } from './db';
 import { customerMessages, inspections, tenants } from '../../src/lib/db/schema';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
 
 describe('MessageService', () => {
     let svc: MessageService;
@@ -17,7 +14,6 @@ describe('MessageService', () => {
         testDb = setup.db;
         await setupSchema(setup.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
         await testDb.insert(tenants).values({ id: 't1', name: 'T', subdomain: 't1', createdAt: new Date() });
         await testDb.insert(inspections).values({
             id: 'i1', tenantId: 't1', propertyAddress: '1 Main', date: '2026-05-01',

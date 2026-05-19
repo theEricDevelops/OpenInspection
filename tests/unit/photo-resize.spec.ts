@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, afterEach , vi } from 'vitest';
 import { resizeImage } from '../../public/js/photo-resize.js';
 
 /**

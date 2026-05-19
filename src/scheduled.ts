@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from './types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { AutomationService } from './services/automation.service';
 import { AgreementService } from './services/agreement.service';
@@ -8,7 +9,7 @@ import { qboConnections } from './lib/db/schema/qbo';
 import { logger } from './lib/logger';
 
 export interface ScheduledEnv {
-    DB: D1Database;
+    DB: SqliteDb;
     PHOTOS?: R2Bucket;
     RESEND_API_KEY?: string;
     SENDER_EMAIL?: string;

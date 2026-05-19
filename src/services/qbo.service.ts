@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and } from 'drizzle-orm';
 import { qboConnections, qboEntityMap, qboSyncErrors } from '../lib/db/schema/qbo';
 import { invoices } from '../lib/db/schema/invoice';
@@ -35,7 +36,7 @@ type MarkPartialFn = (invoiceId: string, balance: number, tenantId: string) => P
 
 export class QBOService {
     constructor(
-        private db: D1Database,
+        private db: SqliteDb,
         private clientId: string,
         private clientSecret: string,
         private webhookSecret: string,
@@ -231,19 +232,22 @@ export class QBOService {
         }
     }
 
-    // Raw SQL because Drizzle does not type the cross-table join we need.
-    private async getQBOCustomerIdForInvoice(tenantId: string, invoiceId: string): Promise<string | null> {
-        const row = await this.db.prepare(
-            `SELECT qem_c.qbo_id AS qbo_customer_id
-             FROM invoices inv
-             JOIN qbo_entity_map qem_c
-               ON qem_c.oi_id = inv.contact_id
-              AND qem_c.tenant_id = inv.tenant_id
-              AND qem_c.oi_type = 'contact'
-             WHERE inv.id = ? AND inv.tenant_id = ?
-             LIMIT 1`,
-        ).bind(invoiceId, tenantId).first<{ qbo_customer_id: string }>().catch(() => null);
-        return row?.qbo_customer_id ?? null;
+    private getQBOCustomerIdForInvoice(tenantId: string, invoiceId: string): string | null {
+        try {
+            const row = this.db.prepare(
+                `SELECT qem_c.qbo_id AS qbo_customer_id
+                 FROM invoices inv
+                 JOIN qbo_entity_map qem_c
+                   ON qem_c.oi_id = inv.contact_id
+                  AND qem_c.tenant_id = inv.tenant_id
+                  AND qem_c.oi_type = 'contact'
+                 WHERE inv.id = ? AND inv.tenant_id = ?
+                 LIMIT 1`,
+            ).get(invoiceId, tenantId) as { qbo_customer_id: string } | undefined;
+            return row?.qbo_customer_id ?? null;
+        } catch {
+            return null;
+        }
     }
 
     private async applyInvoiceStatusFromQBO(

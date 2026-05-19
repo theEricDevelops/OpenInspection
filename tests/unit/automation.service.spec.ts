@@ -5,9 +5,6 @@ import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
-
 const TENANT = '00000000-0000-0000-0000-000000000001';
 const INSP   = '00000000-0000-0000-0000-000000000010';
 const AGR    = '00000000-0000-0000-0000-000000000020';
@@ -32,9 +29,8 @@ describe('AutomationService.trigger — agreement filter', () => {
         const fixture = createTestDb();
         testDb = fixture.db;
         await setupSchema(fixture.sqlite);
-        (mockDrizzle as unknown as ReturnType<typeof vi.fn>).mockReturnValue(testDb);
-        const agr = new AgreementService({} as D1Database);
-        svc = new AutomationService({} as D1Database, undefined, agr);
+        const agr = new AgreementService({} as any);
+        svc = new AutomationService({} as any, undefined, agr);
         // Stub ensureSeeds so tests verify filter logic without seed-rule pollution.
         // Tests insert their own automation rules below.
         vi.spyOn(svc, 'ensureSeeds').mockResolvedValue();

@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, desc } from 'drizzle-orm';
 import { tenantMarketplaceImportHistory } from '../lib/db/schema/marketplace';
 import type { ImportHistoryItem } from '../lib/validations/import-history.schema';
@@ -17,7 +18,7 @@ interface ListOptions {
 export class ImportHistoryService {
     private db: ReturnType<typeof drizzle>;
 
-    constructor(rawDb: D1Database, private tenantId: string) {
+    constructor(rawDb: SqliteDb, private tenantId: string) {
         this.db = drizzle(rawDb);
     }
 

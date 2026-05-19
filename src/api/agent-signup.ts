@@ -4,6 +4,7 @@ import { setCookie } from 'hono/cookie';
 import type { HonoConfig } from '../types/hono';
 import { Errors } from '../lib/errors';
 import { verifyTurnstile } from '../lib/middleware/bot-protection';
+import { authCookieName } from '../lib/cookie';
 import { logger } from '../lib/logger';
 
 /**
@@ -97,9 +98,10 @@ agentSignupRoutes.openapi(signupRoute, async (c) => {
         exp: now + 60 * 60 * 24,
     }, c.env.JWT_SECRET, 'HS256');
 
-    setCookie(c, '__Host-inspector_token', token, {
+    const cookieName = authCookieName(c);
+    setCookie(c, cookieName, token, {
         httpOnly: true,
-        secure: true,
+        secure: cookieName === '__Host-inspector_token',
         sameSite: 'Strict',
         path: '/',
         maxAge: 60 * 60 * 24,

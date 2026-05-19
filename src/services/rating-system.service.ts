@@ -1,3 +1,4 @@
+import type { SqliteDb } from '../types/db';
 /**
  * Sprint 2 S2-1 — RatingSystemService.
  *
@@ -12,7 +13,7 @@
  * templates that don't bind a specific system. Setting a new default
  * automatically clears the flag on any other system inside the tenant.
  */
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq, ne } from 'drizzle-orm';
 import { ratingSystems, templates } from '../lib/db/schema';
 import { Errors } from '../lib/errors';
@@ -77,7 +78,7 @@ function rowToRecord(row: typeof ratingSystems.$inferSelect): RatingSystemRecord
 }
 
 export class RatingSystemService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private getDrizzle() { return drizzle(this.db as any); }

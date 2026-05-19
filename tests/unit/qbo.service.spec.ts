@@ -5,8 +5,6 @@ vi.mock('../../src/lib/qbo-crypto', () => ({
     decryptToken: vi.fn(async (text: string) => text.replace('enc:', '')),
 }));
 
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-
 import { QBOService } from '../../src/services/qbo.service';
 
 describe('QBOService.buildBasicAuth', () => {

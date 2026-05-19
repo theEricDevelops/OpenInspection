@@ -1,3 +1,4 @@
+import type { SqliteDb } from '../types/db';
 /**
  * Sprint 3 S3-3 — TagService.
  *
@@ -11,7 +12,7 @@
  * Seed defaults: five canonical tags planted on first /tags visit
  * via `seedDefaults`. Idempotent — re-runs are no-ops.
  */
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { tags, inspectionItemTagLinks } from '../lib/db/schema';
 import { Errors } from '../lib/errors';
@@ -43,7 +44,7 @@ function rowToRecord(row: typeof tags.$inferSelect): TagRow {
 }
 
 export class TagService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private getDrizzle() { return drizzle(this.db as any); }

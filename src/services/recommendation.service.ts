@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and } from 'drizzle-orm';
 import type { InferSelectModel } from 'drizzle-orm';
 import { recommendations } from '../lib/db/schema';
@@ -19,7 +20,7 @@ export interface CreateRecommendationInput {
 export type UpdateRecommendationInput = Partial<Omit<CreateRecommendationInput, never>>;
 
 export class RecommendationService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private getDrizzle() { return drizzle(this.db as any); }

@@ -1,4 +1,4 @@
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, SQL } from 'drizzle-orm';
 import * as schema from './schema';
 

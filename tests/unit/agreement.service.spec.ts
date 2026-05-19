@@ -1,12 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { AgreementService } from '../../src/services/agreement.service';
 import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
 
 const TENANT_A = '00000000-0000-0000-0000-000000000001';
 const INSP_ID  = '00000000-0000-0000-0000-000000000010';
@@ -33,8 +30,7 @@ describe('AgreementService', () => {
         testDb = fixture.db;
         await setupSchema(fixture.sqlite);
         await seedBase(testDb);
-        (mockDrizzle as unknown as ReturnType<typeof vi.fn>).mockReturnValue(testDb);
-        svc = new AgreementService({} as D1Database);
+        svc = new AgreementService({} as any);
     });
 
     it('findOrCreate inserts a new pending agreement_request with token + sent_at', async () => {

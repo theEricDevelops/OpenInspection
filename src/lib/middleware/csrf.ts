@@ -4,9 +4,17 @@ import { HonoConfig } from '../../types/hono';
 import { Errors } from '../errors';
 import { timingSafeEqual } from '../password';
 
-const CSRF_COOKIE = '__Host-csrf_token';
 const CSRF_HEADER = 'x-csrf-token';
 const CSRF_TTL_SECONDS = 60 * 60 * 24;
+
+const DEV_CSRF_COOKIE = 'csrf_token';
+const PROD_CSRF_COOKIE = '__Host-csrf_token';
+
+export function csrfCookieName(c: Parameters<MiddlewareHandler<HonoConfig>>[0]): string {
+    const proto = c.req.header('x-forwarded-proto') || c.req.header('cf-visibility') || '';
+    const isHttps = proto === 'https' || c.req.url.startsWith('https');
+    return isHttps ? PROD_CSRF_COOKIE : DEV_CSRF_COOKIE;
+}
 
 /** Random 128-bit token, hex-encoded. */
 function generateCsrfToken(): string {
@@ -19,16 +27,17 @@ function generateCsrfToken(): string {
  * posting to a state-changing endpoint — the page's JS will read the cookie and echo it as
  * a header on the submit.
  *
- * The cookie is **not** HttpOnly so same-origin JS can read it, but `__Host-` + Secure +
- * SameSite=Strict still prevents a cross-site attacker from reading or forging it.
+ * On HTTPS the cookie uses the `__Host-` prefix (Secure, Path=/, no Domain) for defense
+ * in depth. On HTTP (dev) it uses a non-prefixed name so the browser accepts it.
  */
 export function issueCsrfCookie(c: Parameters<MiddlewareHandler<HonoConfig>>[0]) {
-    const existing = getCookie(c, CSRF_COOKIE);
+    const name = csrfCookieName(c);
+    const existing = getCookie(c, name);
     if (existing) return existing;
     const token = generateCsrfToken();
-    setCookie(c, CSRF_COOKIE, token, {
+    setCookie(c, name, token, {
         httpOnly: false,
-        secure: true,
+        secure: name === PROD_CSRF_COOKIE,
         sameSite: 'Strict',
         path: '/',
         maxAge: CSRF_TTL_SECONDS,
@@ -42,7 +51,8 @@ export function issueCsrfCookie(c: Parameters<MiddlewareHandler<HonoConfig>>[0])
  * pathway for login-CSRF / session fixation.
  */
 export const requireCsrfToken: MiddlewareHandler<HonoConfig> = async (c, next) => {
-    const cookieToken = getCookie(c, CSRF_COOKIE);
+    const name = csrfCookieName(c);
+    const cookieToken = getCookie(c, name);
     const headerToken = c.req.header(CSRF_HEADER);
     if (!cookieToken || !headerToken || !timingSafeEqual(cookieToken, headerToken)) {
         throw Errors.Forbidden('CSRF token missing or invalid');

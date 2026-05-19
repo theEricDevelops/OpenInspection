@@ -5,9 +5,6 @@ import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import type { EmailService } from '../../src/services/email.service';
 
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
-
 const TENANT_A = '00000000-0000-0000-0000-00000000000a';
 const TENANT_B = '00000000-0000-0000-0000-00000000000b';
 const TENANT_C = '00000000-0000-0000-0000-00000000000c';
@@ -26,13 +23,11 @@ describe('AgentService.autoLinkSameEmail — A1', () => {
             { id: TENANT_B, name: 'B', subdomain: 'bco', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
             { id: TENANT_C, name: 'C', subdomain: 'cco', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
         ]);
-
-        (mockDrizzle as unknown as ReturnType<typeof vi.fn>).mockReturnValue(testDb);
         const stubEmail: Pick<EmailService, 'sendAgentInvite'> = {
             sendAgentInvite: vi.fn().mockResolvedValue(undefined),
         };
         svc = new AgentService(
-            {} as D1Database,
+            {} as any,
             stubEmail as unknown as EmailService,
             'https://acme.example.com',
         );

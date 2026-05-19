@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, gte, lte, sql } from 'drizzle-orm';
 import { availability, availabilityOverrides, inspections, users } from '../lib/db/schema';
 import { Errors } from '../lib/errors';
@@ -9,7 +10,7 @@ import { logger } from '../lib/logger';
  * Service to handle public booking flow and availability lookups.
  */
 export class BookingService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     private getDrizzle() {
         return drizzle(this.db);
@@ -138,7 +139,7 @@ export class BookingService {
  * Service to manage internal inspector availability schedules.
  */
 export class AvailabilityService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     private getDrizzle() {
         return drizzle(this.db);

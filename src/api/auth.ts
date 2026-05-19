@@ -1,5 +1,5 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, sql } from 'drizzle-orm';
 import { users } from '../lib/db/schema';
 import { sign, verify } from 'hono/jwt';
@@ -12,6 +12,8 @@ import { checkRateLimit } from '../lib/rate-limit';
 import { requireCsrfToken } from '../lib/middleware/csrf';
 import { requireRole } from '../lib/middleware/rbac';
 import { verifyPassword } from '../lib/password';
+import { authCookieName, authCookieOptions, deleteAuthCookieOptions } from '../lib/cookie';
+import { csrfCookieName } from '../lib/middleware/csrf';
 import {
     LoginSchema,
     ChangePasswordSchema,
@@ -46,15 +48,6 @@ function requireJwtSecret(secret: string | undefined): string {
  * including top-level navigation — so a malicious link can never drag a logged-in session
  * into a mutation or a sensitive GET.
  */
-function authCookieOptions() {
-    return {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'Strict' as const,
-        path: '/',
-        maxAge: 60 * 60 * 24,
-    };
-}
 
 /**
  * Interface for the decoded JWT payload. Intentionally does not carry email or any other
@@ -136,7 +129,7 @@ coreAuthRoutes.openapi(loginRoute, async (c) => {
         exp: now + 60 * 60 * 24,
     }, secret, 'HS256');
 
-    setCookie(c, '__Host-inspector_token', token, authCookieOptions());
+    setCookie(c, authCookieName(c), token, authCookieOptions(c));
 
     // Intentionally do NOT return the token in the body. Browser clients authenticate via the
     // HttpOnly cookie. Exposing the raw JWT in JSON invites clients to persist it in localStorage
@@ -221,7 +214,7 @@ coreAuthRoutes.openapi(joinTeamRoute, async (c) => {
         exp: now + 60 * 60 * 24,
     }, secret, 'HS256');
 
-    setCookie(c, '__Host-inspector_token', token, authCookieOptions());
+    setCookie(c, authCookieName(c), token, authCookieOptions(c));
 
     return c.json({
         success: true,
@@ -381,7 +374,12 @@ coreAuthRoutes.openapi(setupRoute, async (c) => {
     }
 
     // 4. Issue a JWT for the new admin so the caller can authenticate immediately
-    const newUser = await db.select().from(users).where(eq(users.email, body.email)).get().catch(() => null);
+    let newUser: typeof users.$inferSelect | undefined;
+    try {
+        newUser = db.select().from(users).where(eq(users.email, body.email)).get();
+    } catch {
+        newUser = undefined;
+    }
     if (newUser) {
         const secret = requireJwtSecret(c.env.JWT_SECRET);
         const now = Math.floor(Date.now() / 1000);
@@ -393,7 +391,7 @@ coreAuthRoutes.openapi(setupRoute, async (c) => {
             iat: now,
             exp: now + 60 * 60 * 24,
         }, secret, 'HS256');
-        setCookie(c, '__Host-inspector_token', token, authCookieOptions());
+        setCookie(c, authCookieName(c), token, authCookieOptions(c));
     }
 
     return c.json({
@@ -571,11 +569,7 @@ coreAuthRoutes.openapi(logoutRoute, async (c) => {
         await c.var.services.auth.invalidateUserSessions(user.sub);
     }
 
-    deleteCookie(c, '__Host-inspector_token', {
-        path: '/',
-        secure: true,
-        sameSite: 'Strict',
-    });
+    deleteCookie(c, authCookieName(c), deleteAuthCookieOptions(c));
 
     // iter-2 production bug #4 — clear the CSRF cookie alongside the auth
     // cookie. Without this, `__Host-csrf_token` outlives the session and
@@ -583,9 +577,10 @@ coreAuthRoutes.openapi(logoutRoute, async (c) => {
     // inherits the same CSRF token, which an attacker who exfiltrated it
     // pre-logout can replay against the new session. Same `__Host-` prefix
     // rules apply (Secure + Path=/).
-    deleteCookie(c, '__Host-csrf_token', {
+    const csrfName = csrfCookieName(c);
+    deleteCookie(c, csrfName, {
         path: '/',
-        secure: true,
+        secure: csrfName === '__Host-csrf_token',
         sameSite: 'Strict',
     });
 
@@ -831,7 +826,7 @@ coreAuthRoutes.openapi(login2faRoute, async (c) => {
         exp: now + 60 * 60 * 24,
     }, secret, 'HS256');
 
-    setCookie(c, '__Host-inspector_token', sessionToken, authCookieOptions());
+    setCookie(c, authCookieName(c), sessionToken, authCookieOptions(c));
     return c.json({ success: true, data: { redirect: '/dashboard' } }, 200);
 });
 

@@ -1,5 +1,6 @@
+import type { SqliteDb } from '../types/db';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and } from 'drizzle-orm';
 import { users } from '../lib/db/schema/tenant';
 import { availabilityOverrides } from '../lib/db/schema/inspection';
@@ -334,7 +335,7 @@ export async function createCalendarEvent(
  * update / delete the remote entry when status changes — see TODO below.
  */
 export async function syncEventsToGcal(
-    db: D1Database,
+    db: SqliteDb,
     tenantId: string,
     clientId: string,
     clientSecret: string,

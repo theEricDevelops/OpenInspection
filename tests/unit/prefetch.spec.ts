@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach , vi } from 'vitest';
 import 'fake-indexeddb/auto';
 
 // Use dynamic import inside tests so fake-indexeddb is in place before db.js opens.

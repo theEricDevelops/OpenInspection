@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { inspections, templates, agreements } from '../lib/db/schema';
 import { logger } from '../lib/logger';
@@ -10,7 +11,7 @@ export interface ExportManifest {
 }
 
 export class DataExportService {
-    constructor(private db: D1Database, private r2: R2Bucket) {}
+    constructor(private db: SqliteDb, private r2: R2Bucket) {}
 
     async buildZip(tenantId: string): Promise<{ buffer: Uint8Array; manifest: ExportManifest }> {
         const d = drizzle(this.db);

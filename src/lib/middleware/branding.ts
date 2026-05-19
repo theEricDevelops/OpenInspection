@@ -1,7 +1,7 @@
 import { MiddlewareHandler } from 'hono';
 import { BrandingConfig } from '../../types/auth';
 import { eq } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { tenantConfigs } from '../db/schema';
 import { HonoConfig } from '../../types/hono';
 import { logger } from '../logger';

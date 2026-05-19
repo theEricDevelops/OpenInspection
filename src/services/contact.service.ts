@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, like, sql } from 'drizzle-orm';
 import { contacts } from '../lib/db/schema/contact';
 import { inspections } from '../lib/db/schema/inspection';
@@ -6,7 +7,7 @@ import { Errors } from '../lib/errors';
 import { safeISODate } from '../lib/date';
 
 export class ContactService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private getDrizzle() { return drizzle(this.db as any); }

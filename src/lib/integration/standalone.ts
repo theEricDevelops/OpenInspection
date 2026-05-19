@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { tenants, users, templates } from '../db/schema';
 import { IntegrationProvider, TenantUpdateParams } from '../integration';
@@ -23,12 +24,9 @@ const SQL_UUID_V4 = `lower(
 // Default Comment Library entries seeded into every new tenant. The same set
 // is also seeded into existing tenants by migration 0022_seed_default_comments.
 // Each row is idempotent on (tenant_id, text) — seeded only when missing.
-async function seedDefaultComments(db: D1Database, tenantId: string): Promise<void> {
+function seedDefaultComments(db: SqliteDb, tenantId: string): void {
     try {
-        // Idempotent NOT EXISTS clause keeps this safe to re-run.
-        // `created_at` is `mode: 'timestamp'` (seconds since epoch) in the
-        // Drizzle schema; unixepoch('now') matches that contract directly.
-        await db.prepare(`
+        db.prepare(`
             INSERT INTO comments (id, tenant_id, text, category, created_at)
             SELECT ${SQL_UUID_V4}, ?, x.text, x.category, unixepoch('now')
             FROM (
@@ -42,11 +40,8 @@ async function seedDefaultComments(db: D1Database, tenantId: string): Promise<vo
                 SELECT 'Carbon monoxide detector missing; recommend installation per current code.', 'Electrical'
             ) AS x
             WHERE NOT EXISTS (SELECT 1 FROM comments c WHERE c.tenant_id = ? AND c.text = x.text)
-        `).bind(tenantId, tenantId).run();
+        `).run(tenantId, tenantId);
     } catch (err) {
-        // non-fatal: tenant creation must not fail because of seed data,
-        // but the silent swallow used to hide real schema/permissions
-        // problems — emit a warning so future failures are visible.
         logger.warn('seedDefaultComments.failed', {
             tenantId,
             error: err instanceof Error ? err.message : String(err),
@@ -64,7 +59,7 @@ async function seedDefaultComments(db: D1Database, tenantId: string): Promise<vo
 // Implemented as a per-row JS loop because D1 caps compound SELECT terms
 // (~10) so the prior single-statement INSERT … SELECT … UNION ALL fan-out
 // raised SQLITE_ERROR "too many terms in compound SELECT" at run time.
-async function seedDefaultAutomations(db: D1Database, tenantId: string): Promise<void> {
+function seedDefaultAutomations(db: SqliteDb, tenantId: string): void {
     const rows: Array<[string, string, string, string, string]> = [
         ['report.published', 'client', 'Report Ready (Client)', 'Your inspection report is ready — {{property_address}}', '<p>Hi {{client_name}},</p><p>Your inspection report for <strong>{{property_address}}</strong> is ready to view.</p><p><a href="{{report_url}}">View Report</a></p><p>— {{company_name}}</p>'],
         ['report.published', 'buying_agent', "Report Ready (Buyer's Agent)", 'Your inspection report is ready — {{property_address}}', '<p>The inspection report for <strong>{{property_address}}</strong> is ready.</p><p><a href="{{report_url}}">View Report</a></p><p>— {{company_name}}</p>'],
@@ -86,9 +81,8 @@ async function seedDefaultAutomations(db: D1Database, tenantId: string): Promise
     `;
     for (const [trigger, recipient, name, subject, body] of rows) {
         try {
-            await db.prepare(stmt)
-                .bind(tenantId, trigger, recipient, name, subject, body, tenantId, trigger, recipient, name)
-                .run();
+            db.prepare(stmt)
+                .run(tenantId, trigger, recipient, name, subject, body, tenantId, trigger, recipient, name);
         } catch (err) {
             logger.warn('seedDefaultAutomations.row.failed', {
                 tenantId, trigger, name,
@@ -101,7 +95,7 @@ async function seedDefaultAutomations(db: D1Database, tenantId: string): Promise
 // Default pre-inspection agreement seeded for every new tenant. Plain-text
 // content (no HTML) so the agreement viewer can render it consistently across
 // sign UI, signed-copy email, and PDF. Idempotent on (tenant_id, name).
-async function seedDefaultAgreement(db: D1Database, tenantId: string): Promise<void> {
+function seedDefaultAgreement(db: SqliteDb, tenantId: string): void {
     try {
         const content = [
             'PRE-INSPECTION AGREEMENT',
@@ -124,13 +118,13 @@ async function seedDefaultAgreement(db: D1Database, tenantId: string): Promise<v
             'Signed electronically by the client at the time and IP address recorded in the audit trail attached to this document.',
         ].join('\n');
 
-        await db.prepare(`
+        db.prepare(`
             INSERT INTO agreements (id, tenant_id, name, content, version, created_at)
             SELECT ${SQL_UUID_V4}, ?, ?, ?, 1, unixepoch('now')
             WHERE NOT EXISTS (
                 SELECT 1 FROM agreements WHERE tenant_id = ? AND name = ?
             )
-        `).bind(tenantId, 'Pre-Inspection Agreement', content, tenantId, 'Pre-Inspection Agreement').run();
+        `).run(tenantId, 'Pre-Inspection Agreement', content, tenantId, 'Pre-Inspection Agreement');
     } catch (err) {
         // non-fatal: setup wizard must not fail because of seed data
         logger.warn('seedDefaultAgreement failed', { tenantId, error: (err as Error).message });
@@ -141,9 +135,9 @@ async function seedDefaultAgreement(db: D1Database, tenantId: string): Promise<v
 // inspection products that customers pick from on /book; without them the
 // public booking page has no items to add to cart. Idempotent on
 // (tenant_id, name).
-async function seedDefaultServices(db: D1Database, tenantId: string): Promise<void> {
+function seedDefaultServices(db: SqliteDb, tenantId: string): void {
     try {
-        await db.prepare(`
+        db.prepare(`
             INSERT INTO services (
                 id, tenant_id, name, description, price, duration_minutes,
                 template_id, agreement_id, active, sort_order, created_at
@@ -159,7 +153,7 @@ async function seedDefaultServices(db: D1Database, tenantId: string): Promise<vo
             WHERE NOT EXISTS (
                 SELECT 1 FROM services s WHERE s.tenant_id = ? AND s.name = x.name
             )
-        `).bind(tenantId, tenantId).run();
+        `).run(tenantId, tenantId);
     } catch (err) {
         // non-fatal: setup wizard must not fail because of seed data
         logger.warn('seedDefaultServices.failed', {
@@ -174,7 +168,7 @@ async function seedDefaultServices(db: D1Database, tenantId: string): Promise<vo
  * Used in the open-source version where Core is managed directly or via local CLI/Admin UI.
  */
 export class StandaloneProvider implements IntegrationProvider {
-    constructor(private db: D1Database, private kv?: KVNamespace) {}
+    constructor(private db: SqliteDb, private kv?: KVNamespace) {}
 
     private getDrizzle() {
         return drizzle(this.db);

@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { inspections } from '../lib/db/schema/inspection';
 import { tenantConfigs } from '../lib/db/schema';

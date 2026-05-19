@@ -1,11 +1,12 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { users, tenantInvites, tenants } from '../lib/db/schema';
 import { eq, and, count } from 'drizzle-orm';
 import { UserRole } from '../types/auth';
 import { Errors } from '../lib/errors';
 
 export class TeamService {
-    constructor(private db: D1Database, private env?: { APP_MODE?: string }) {}
+    constructor(private db: SqliteDb, private env?: { APP_MODE?: string }) {}
 
     private getDB() {
         return drizzle(this.db);

@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { tenants, users, recommendations } from '../db/schema';
 import { IntegrationProvider, TenantUpdateParams } from '../integration';
@@ -10,7 +11,7 @@ import { RECOMMENDATION_SEEDS } from '../../data/recommendation-seeds';
  * Used in the SaaS version where Core is tightly coupled with the SaaS Portal.
  */
 export class PortalProvider implements IntegrationProvider {
-    constructor(private db: D1Database, private kv?: KVNamespace) {}
+    constructor(private db: SqliteDb, private kv?: KVNamespace) {}
 
     private getDrizzle() {
         return drizzle(this.db);

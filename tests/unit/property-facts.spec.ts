@@ -10,15 +10,12 @@
  *   - Zod parse on the new PATCH payload.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, } from 'vitest';
 import { InspectionService } from '../../src/services/inspection.service';
 import { PropertyFactsSchema, UpdateInspectionSchema } from '../../src/lib/validations/inspection.schema';
 import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
 
 const TENANT_A = '00000000-0000-0000-0000-000000000001';
 const TENANT_B = '00000000-0000-0000-0000-000000000002';
@@ -32,8 +29,7 @@ describe('InspectionService.updatePropertyFacts (G1)', () => {
         testDb = fixture.db;
         await setupSchema(fixture.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
-        svc = new InspectionService({} as D1Database);
+        svc = new InspectionService({} as any);
 
         await testDb.insert(schema.tenants).values([
             { id: TENANT_A, name: 'Acme',   subdomain: 'acme',   status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },

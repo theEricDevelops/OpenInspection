@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, asc } from 'drizzle-orm';
 import { services, inspectionServices, discountCodes } from '../lib/db/schema';
 import { Errors } from '../lib/errors';
@@ -11,7 +12,7 @@ type UpdateServiceData  = z.infer<typeof UpdateServiceSchema>;
 type CreateDiscountData = z.infer<typeof CreateDiscountCodeSchema>;
 
 export class ServiceService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     private getDrizzle() { return drizzle(this.db); }
 

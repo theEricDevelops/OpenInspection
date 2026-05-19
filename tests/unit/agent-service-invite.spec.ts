@@ -5,9 +5,6 @@ import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import type { EmailService } from '../../src/services/email.service';
 
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
-
 const TENANT = '00000000-0000-0000-0000-000000000001';
 const INSPECTOR = '00000000-0000-0000-0000-000000000010';
 
@@ -39,12 +36,9 @@ describe('AgentService.invite — A1', () => {
             createdAt: new Date(),
             passwordHash: 'x',
         });
-
-        (mockDrizzle as unknown as ReturnType<typeof vi.fn>).mockReturnValue(testDb);
-
         stubEmail = { sendAgentInvite: vi.fn().mockResolvedValue(undefined) };
         svc = new AgentService(
-            {} as D1Database,
+            {} as any,
             stubEmail as unknown as EmailService,
             'https://acme.example.com',
         );

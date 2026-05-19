@@ -1,5 +1,5 @@
 import { MiddlewareHandler } from 'hono';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { tenants } from '../db/schema';
 import { HonoConfig } from '../../types/hono';

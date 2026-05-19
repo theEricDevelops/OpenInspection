@@ -4,9 +4,6 @@ import { InvoiceService } from '../../src/services/invoice.service';
 import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
-
 const TENANT_A = '00000000-0000-0000-0000-000000000001';
 const TENANT_B = '00000000-0000-0000-0000-000000000002';
 const INSP_ID  = '00000000-0000-0000-0000-000000000010';
@@ -47,8 +44,7 @@ describe('iter-2 #10 — InvoiceService.findByInspectionId', () => {
         await setupSchema(fixture.sqlite);
         await seedBase(testDb);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
-        svc = new InvoiceService({} as D1Database);
+        svc = new InvoiceService({} as any);
     });
 
     afterEach(() => {

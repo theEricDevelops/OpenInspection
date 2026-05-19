@@ -1,12 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { InspectionService } from '../../src/services/inspection.service';
 import { ScopedDB } from '../../src/lib/db/scoped';
 import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
 
 const TENANT = '00000000-0000-0000-0000-0000000000aa';
 
@@ -29,7 +26,6 @@ describe('InspectionService.createInspection — Round-2 #10 policy inheritance'
         testDb = fixture.db;
         await setupSchema(fixture.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         sdb = new ScopedDB(testDb as any, TENANT);
 
@@ -52,7 +48,7 @@ describe('InspectionService.createInspection — Round-2 #10 policy inheritance'
             updatedAt: new Date(),
         });
 
-        const svc = new InspectionService({} as D1Database, undefined, sdb);
+        const svc = new InspectionService({} as any, undefined, sdb);
         await svc.createInspection(TENANT, {
             propertyAddress: '1 Main St',
             clientName: 'Test Client',
@@ -72,7 +68,7 @@ describe('InspectionService.createInspection — Round-2 #10 policy inheritance'
             updatedAt: new Date(),
         });
 
-        const svc = new InspectionService({} as D1Database, undefined, sdb);
+        const svc = new InspectionService({} as any, undefined, sdb);
         await svc.createInspection(TENANT, {
             propertyAddress: '2 Main St',
             clientName: 'Test Client',
@@ -92,7 +88,7 @@ describe('InspectionService.createInspection — Round-2 #10 policy inheritance'
             updatedAt: new Date(),
         });
 
-        const svc = new InspectionService({} as D1Database, undefined, sdb);
+        const svc = new InspectionService({} as any, undefined, sdb);
         await svc.createInspection(TENANT, {
             propertyAddress: '3 Main St',
             clientName: 'Test Client',
@@ -109,7 +105,7 @@ describe('InspectionService.createInspection — Round-2 #10 policy inheritance'
     it('both flags default to false when tenant has no tenant_configs row', async () => {
         // No tenantConfigs insert — the createInspection lookup must tolerate
         // a missing row and fall back to false on both flags.
-        const svc = new InspectionService({} as D1Database, undefined, sdb);
+        const svc = new InspectionService({} as any, undefined, sdb);
         await svc.createInspection(TENANT, {
             propertyAddress: '4 Main St',
             clientName: 'Test Client',

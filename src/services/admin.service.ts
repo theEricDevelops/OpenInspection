@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, inArray, desc, and as dbAnd, or as dbOr, lt as dbLt } from 'drizzle-orm';
 import {
     users,
@@ -22,7 +23,7 @@ import { safeTimestamp } from '../lib/date';
  */
 export class AdminService {
     constructor(
-        private db: D1Database, 
+        private db: SqliteDb, 
         private integration?: IntegrationProvider
     ) {}
 

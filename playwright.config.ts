@@ -11,7 +11,7 @@ export default defineConfig({
     },
     tsconfig: './tsconfig.playwright.json',
     webServer: {
-        command: 'npx wrangler dev --port 8789',
+        command: 'PORT=8789 DB_PATH=./test-e2e.db tsx src/server.ts',
         url: 'http://127.0.0.1:8789/status',
         reuseExistingServer: true,
         stdout: 'pipe',

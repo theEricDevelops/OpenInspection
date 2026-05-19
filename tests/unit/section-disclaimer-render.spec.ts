@@ -3,14 +3,11 @@
  * disclaimerText + alwaysPageBreak so the published report viewer can
  * render the disclaimer block + apply the data-page-break attribute.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, } from 'vitest';
 import { InspectionService } from '../../src/services/inspection.service';
 import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
 
 const TENANT = '00000000-0000-0000-0000-000000000077';
 const INSPECTION_ID = '33333333-3333-3333-3333-333333333333';
@@ -50,8 +47,7 @@ describe('Track E2 — section disclaimer + alwaysPageBreak surfacing', () => {
         testDb = fixture.db;
         await setupSchema(fixture.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
-        svc = new InspectionService({} as D1Database);
+        svc = new InspectionService({} as any);
 
         await testDb.insert(schema.tenants).values({
             id: TENANT, name: 'Acme', subdomain: 'acme', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date(),

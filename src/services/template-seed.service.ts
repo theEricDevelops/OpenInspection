@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and } from 'drizzle-orm';
 import { templates } from '../lib/db/schema';
 import { logger } from '../lib/logger';
@@ -15,7 +16,7 @@ const SEEDS = [residential, preListing, newConstruction, newConstructionFinal, s
 export const DEFAULT_AUTO_SEED_NAMES = SEEDS.map(s => s.name);
 
 export class TemplateSeedService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     async bulkSeed(tenantId: string): Promise<{ seeded: number; skipped: number }> {
         const d = drizzle(this.db);

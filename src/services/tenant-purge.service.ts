@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { logger } from '../lib/logger';
 import {
@@ -24,7 +25,7 @@ export interface PurgeResult {
 }
 
 export class TenantPurgeService {
-    constructor(private db: D1Database, private r2: R2Bucket, private kv: KVNamespace) {}
+    constructor(private db: SqliteDb, private r2: R2Bucket, private kv: KVNamespace) {}
 
     async purge(tenantId: string): Promise<PurgeResult> {
         const d = drizzle(this.db);
@@ -45,7 +46,7 @@ export class TenantPurgeService {
         for (const tbl of TENANT_TABLES) {
             try {
                 const r = await d.delete(tbl).where(eq((tbl as { tenantId: { name: string } }).tenantId as never, tenantId)).run();
-                rows += r.meta.changes ?? 0;
+                rows += r.changes ?? 0;
             } catch (err) {
                 logger.error('Tenant table delete failed', { tenantId, table: (tbl as { _ : { name: string } })._?.name }, err instanceof Error ? err : undefined);
             }

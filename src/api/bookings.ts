@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, inArray } from 'drizzle-orm';
 import { users, inspections, services as servicesTable, agentTenantLinks } from '../lib/db/schema';
 import { isNull } from 'drizzle-orm';

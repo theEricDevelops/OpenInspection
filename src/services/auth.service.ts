@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { users, tenantInvites } from '../lib/db/schema';
 import { Errors } from '../lib/errors';
@@ -13,7 +14,7 @@ const DUMMY_HASH = 'pbkdf2:00000000000000000000000000000000:00000000000000000000
  * Decouples database operations from the HTTP routing layer.
  */
 export class AuthService {
-    constructor(private db: D1Database, private kv?: KVNamespace) {}
+    constructor(private db: SqliteDb, private kv?: KVNamespace) {}
 
     private getDrizzle() {
         return drizzle(this.db);

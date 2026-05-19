@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, inArray, sql, desc } from 'drizzle-orm';
 import { agreements, agreementRequests, inspections } from '../lib/db/schema';
 import { Errors } from '../lib/errors';
@@ -73,7 +74,7 @@ function sanitizeAgreementHtml(html: string): string {
  * Service to manage tenant-specific agreement templates (signatures, terms).
  */
 export class AgreementService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     private getDrizzle() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, desc, eq, ne } from 'drizzle-orm';
 import { isNull } from 'drizzle-orm';
 import { agentInvites, agentTenantLinks, tenants, users } from '../lib/db/schema/tenant';
@@ -102,7 +103,7 @@ function normalizeEmail(email: string): string {
 
 export class AgentService {
     constructor(
-        private db: D1Database,
+        private db: SqliteDb,
         private email: EmailService,
         private appBaseUrl: string,
     ) {}

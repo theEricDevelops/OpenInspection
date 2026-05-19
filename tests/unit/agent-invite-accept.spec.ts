@@ -7,9 +7,6 @@ import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import type { EmailService } from '../../src/services/email.service';
 
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
-
 function render(node: JSX.Element): string {
     return String(node as unknown as { toString(): string });
 }
@@ -124,13 +121,11 @@ describe('AgentService.resolveInvite + acceptInvite — A1', () => {
             id: INSPECTOR, tenantId: TENANT, email: 'mike@acme.com', name: 'Mike',
             role: 'inspector', createdAt: new Date(), passwordHash: 'x',
         });
-
-        (mockDrizzle as unknown as ReturnType<typeof vi.fn>).mockReturnValue(testDb);
         const stubEmail: Pick<EmailService, 'sendAgentInvite'> = {
             sendAgentInvite: vi.fn().mockResolvedValue(undefined),
         };
         svc = new AgentService(
-            {} as D1Database,
+            {} as any,
             stubEmail as unknown as EmailService,
             'https://acme.example.com',
         );

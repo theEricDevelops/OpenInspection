@@ -6,12 +6,6 @@ import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
 // Mock drizzle-orm/d1 to return our in-memory better-sqlite3 db so the service
 // can be exercised exactly as it would on D1 in production.
-vi.mock('drizzle-orm/d1', () => ({
-    drizzle: vi.fn(),
-}));
-
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
-
 const TENANT = '00000000-0000-0000-0000-0000000000aa';
 const OTHER_TENANT = '00000000-0000-0000-0000-0000000000bb';
 
@@ -27,14 +21,12 @@ describe('UserService — slug', () => {
         await setupSchema(sqlite);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
-
         await testDb.insert(schema.tenants).values([
             { id: TENANT, name: 'Acme', subdomain: 'acme', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
             { id: OTHER_TENANT, name: 'Other', subdomain: 'other', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
         ]);
 
-        svc = new UserService({} as unknown as D1Database);
+        svc = new UserService({} as unknown as any);
     });
 
     afterEach(() => {

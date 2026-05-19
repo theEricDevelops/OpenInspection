@@ -1,12 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, } from 'vitest';
 import { ImportHistoryService } from '../../src/services/import-history.service';
 import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import { tenantMarketplaceImportHistory } from '../../src/lib/db/schema/marketplace';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
 
 const TENANT = '00000000-0000-0000-0000-000000000001';
 const OTHER_TENANT = '00000000-0000-0000-0000-000000000002';
@@ -48,7 +45,6 @@ describe('ImportHistoryService', () => {
             { id: OTHER_TENANT, name: 'O', subdomain: 'o', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
         ]);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         svc = new ImportHistoryService({} as any, TENANT);
     });

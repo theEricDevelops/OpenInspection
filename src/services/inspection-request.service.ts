@@ -1,3 +1,4 @@
+import type { SqliteDb } from '../types/db';
 /**
  * Sprint 2 S2-2 — Inspection Request service.
  *
@@ -6,7 +7,7 @@
  * `tenantId` per the multi-tenant rules in CLAUDE.md.
  */
 
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq, gte, lte, inArray, desc } from 'drizzle-orm';
 import {
     inspectionRequests,
@@ -78,7 +79,7 @@ type SubInspectionRow = {
 type RequestRow = typeof inspectionRequests.$inferSelect;
 
 export class InspectionRequestService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private getDrizzle() { return drizzle(this.db as any); }

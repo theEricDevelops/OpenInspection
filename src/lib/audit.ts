@@ -1,5 +1,6 @@
+import type { SqliteDb } from '../types/db';
 import type { Context } from 'hono';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { auditLogs, users } from './db/schema/tenant';
 import { logger } from './logger';
@@ -65,7 +66,7 @@ export type AuditAction =
     | 'inspection.property_facts.autofill';
 
 export interface AuditParams {
-    db: D1Database;
+    db: SqliteDb;
     tenantId: string;
     userId?: string | undefined;
     action: AuditAction;
@@ -161,7 +162,7 @@ export interface AuditWithSlugParams {
  * insert promise still surfaces as a no-await background write — same shape
  * as writeAuditLog so callers can fire-and-forget.
  */
-export async function writeAuditLogWithSlug(db: D1Database, params: AuditWithSlugParams): Promise<void> {
+export async function writeAuditLogWithSlug(db: SqliteDb, params: AuditWithSlugParams): Promise<void> {
     let inspectorSlug: string | null = null;
     if (params.actorUserId && INSPECTOR_SLUG_AUDIT_ALLOWLIST.has(params.action)) {
         try {

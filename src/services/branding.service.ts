@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { tenantConfigs } from '../lib/db/schema';
 import { Errors } from '../lib/errors';
@@ -22,7 +23,7 @@ export interface SecretsConfig {
  * Also manages integration config (plaintext) and secrets (AES-GCM encrypted).
  */
 export class BrandingService {
-    constructor(private db: D1Database, private kv?: KVNamespace, private r2?: R2Bucket) {}
+    constructor(private db: SqliteDb, private kv?: KVNamespace, private r2?: R2Bucket) {}
 
     private getDrizzle() {
         return drizzle(this.db);

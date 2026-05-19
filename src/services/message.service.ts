@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { customerMessages, inspections } from '../lib/db/schema';
 import type { MessageAttachment } from '../lib/db/schema';
@@ -15,7 +16,7 @@ interface CreateMessageInput {
 }
 
 export class MessageService {
-    constructor(private d1: D1Database, private notification?: NotificationService) {}
+    constructor(private d1: SqliteDb, private notification?: NotificationService) {}
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private db() { return drizzle(this.d1 as any); }
 

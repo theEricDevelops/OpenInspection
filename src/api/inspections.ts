@@ -35,7 +35,7 @@ import {
 import { CreateTemplateSchema, UpdateTemplateSchema } from '../lib/validations/template.schema';
 import { createApiResponseSchema, SuccessResponseSchema } from '../lib/validations/shared.schema';
 import { AggregatedRecommendationsResponseSchema } from '../lib/validations/recommendation.schema';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { inspections as inspectionTable, inspectionResults, agreements, inspectionAgreements, agreementRequests, users, contacts } from '../lib/db/schema';
 import { eq, inArray, and } from 'drizzle-orm';
 import type { Context } from 'hono';

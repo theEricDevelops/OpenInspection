@@ -1,10 +1,11 @@
+import type { SqliteDb } from './db';
 /**
  * Global environment bindings for the Cloudflare Worker.
  * Defines the expected resources from wrangler.toml.
  */
 export interface AppEnv {
     // Infrastructure
-    DB: D1Database;
+    DB: SqliteDb;
     TENANT_CACHE: KVNamespace;
     PHOTOS: R2Bucket;
     

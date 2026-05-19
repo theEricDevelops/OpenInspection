@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq } from 'drizzle-orm';
 import { agentTenantLinks } from '../db/schema/tenant';
 import { Errors } from '../errors';

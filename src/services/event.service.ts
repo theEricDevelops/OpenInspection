@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, gte, lte, asc } from 'drizzle-orm';
 import { eventTypes, inspectionEvents, inspections, automations, automationLogs } from '../lib/db/schema';
 import { EVENT_TYPE_SEEDS } from '../data/event-type-seeds';
@@ -11,7 +12,7 @@ const FOLLOWUP_DELAY_MS     = 72 * 3600_000;
 export type EventStatus = 'scheduled' | 'completed' | 'results_received' | 'cancelled';
 
 export class EventService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     // ---- Event types ----
 

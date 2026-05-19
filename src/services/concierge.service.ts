@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq, isNull } from 'drizzle-orm';
 import {
     inspections,
@@ -85,7 +86,7 @@ function toMs(value: Date | number | null | undefined): number {
 
 export class ConciergeService {
     constructor(
-        private db: D1Database,
+        private db: SqliteDb,
         private email: EmailService,
         private appBaseUrl: string,
     ) {}

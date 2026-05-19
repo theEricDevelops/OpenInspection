@@ -1,5 +1,5 @@
 /**
- * D1HttpDatabase ??implements the Cloudflare D1Database binding interface over
+ * D1HttpDatabase implements the Cloudflare D1Database binding interface over
  * the Cloudflare D1 REST API. Allows Drizzle ORM to query a dynamically-selected
  * D1 database (silo mode) without a static wrangler binding.
  *

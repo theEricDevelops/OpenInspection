@@ -4,9 +4,6 @@ import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
-
 const TENANT = '00000000-0000-0000-0000-000000000099';
 const INSPECTION_ID = '11111111-1111-1111-1111-111111111111';
 
@@ -38,9 +35,8 @@ describe.skip('InspectionService — Media Center (Round-2 backlog #9)', () => {
         testDb = fixture.db;
         await setupSchema(fixture.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
         // Cast r2Mock to the R2Bucket shape we use (put/delete only).
-        svc = new InspectionService({} as D1Database, r2Mock as unknown as R2Bucket);
+        svc = new InspectionService({} as any, r2Mock as unknown as R2Bucket);
         r2Mock.put.mockClear();
         r2Mock.delete.mockClear();
 

@@ -6,9 +6,6 @@ import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import type { EmailService } from '../../src/services/email.service';
 
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
-
 const T1            = '00000000-0000-0000-0000-0000000000a1';
 const T1_SUB        = 't1';
 const AGENT         = '00000000-0000-0000-0000-0000000000a2';
@@ -83,14 +80,13 @@ describe('ConciergeService — A3', () => {
         const fixture = createTestDb();
         testDb = fixture.db;
         await setupSchema(fixture.sqlite);
-        (mockDrizzle as unknown as ReturnType<typeof vi.fn>).mockReturnValue(testDb);
         stubEmail = {
             sendConciergeClientConfirm:    vi.fn().mockResolvedValue(undefined),
             sendConciergeInspectorReview:  vi.fn().mockResolvedValue(undefined),
             sendConciergeConfirmedToAgent: vi.fn().mockResolvedValue(undefined),
             sendConciergeCancelledToAgent: vi.fn().mockResolvedValue(undefined),
         };
-        svc = new ConciergeService({} as D1Database, stubEmail as unknown as EmailService, 'https://acme.example.com');
+        svc = new ConciergeService({} as any, stubEmail as unknown as EmailService, 'https://acme.example.com');
     });
 
     describe('createBooking', () => {

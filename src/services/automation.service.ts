@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, lte, sql, desc } from 'drizzle-orm';
 import { automations, automationLogs, inspections } from '../lib/db/schema';
 import { AUTOMATION_SEEDS } from '../data/automation-seeds';
@@ -21,7 +22,7 @@ interface TriggerContext {
 }
 
 export class AutomationService {
-    constructor(private db: D1Database, private notification?: NotificationService, private agreementService?: AgreementService) {}
+    constructor(private db: SqliteDb, private notification?: NotificationService, private agreementService?: AgreementService) {}
 
     private getDrizzle() { return drizzle(this.db); }
 

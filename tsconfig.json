@@ -18,7 +18,7 @@
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
-        "types": ["@types/node", "@cloudflare/vitest-pool-workers"],
+        "types": ["@types/node"],
         "skipLibCheck": true,
         "incremental": true,
         "tsBuildInfoFile": "./.tsbuildinfo",

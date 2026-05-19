@@ -1,3 +1,4 @@
+import type { SqliteDb } from '../types/db';
 /**
  * Round-2 backlog #2 — Dashboard preferences service (Spectora §5.1 / §E.7).
  *
@@ -14,7 +15,7 @@
  * without breaking older data.
  */
 
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { tenantConfigs } from '../lib/db/schema';
 import {
@@ -23,7 +24,7 @@ import {
 } from '../lib/dashboard-columns';
 
 export class DashboardPrefsService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     private getDrizzle() {
         return drizzle(this.db);

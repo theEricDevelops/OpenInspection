@@ -129,8 +129,8 @@ api.post('/tenants/:subdomain/stripe-connect', verifyPortalSignature, async (c) 
  */
 api.post('/tenants/:subdomain/data-export', verifyPortalSignature, async (c) => {
     const subdomain = c.req.param('subdomain');
-    const { drizzle } = await import('drizzle-orm/d1');
     const { eq } = await import('drizzle-orm');
+    const { drizzle } = await import('drizzle-orm/better-sqlite3');
     const { tenants } = await import('../lib/db/schema');
     const d = drizzle(c.env.DB);
     const t = await d.select({ id: tenants.id }).from(tenants).where(eq(tenants.subdomain, subdomain as string)).get();
@@ -161,8 +161,8 @@ api.post('/tenants/:subdomain/data-export', verifyPortalSignature, async (c) => 
  */
 api.post('/tenants/:subdomain/purge', verifyPortalSignature, async (c) => {
     const subdomain = c.req.param('subdomain');
-    const { drizzle } = await import('drizzle-orm/d1');
     const { eq } = await import('drizzle-orm');
+    const { drizzle } = await import('drizzle-orm/better-sqlite3');
     const { tenants } = await import('../lib/db/schema');
     const d = drizzle(c.env.DB);
     const t = await d.select({ id: tenants.id }).from(tenants).where(eq(tenants.subdomain, subdomain as string)).get();

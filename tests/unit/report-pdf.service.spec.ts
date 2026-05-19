@@ -4,9 +4,6 @@ import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
-
 vi.mock('../../src/lib/pdf', () => ({
     generatePdfFromUrl: vi.fn(async () => new ArrayBuffer(1024)),
 }));
@@ -34,9 +31,8 @@ describe('ReportPdfService', () => {
         testDb = setup.db;
         await setupSchema(setup.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
         await seed(testDb);
-        svc = new ReportPdfService({} as D1Database, mockBrowser, mockR2);
+        svc = new ReportPdfService({} as any, mockBrowser, mockR2);
         vi.clearAllMocks();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (generatePdfFromUrl as any).mockResolvedValue(new ArrayBuffer(2048));
@@ -81,14 +77,14 @@ describe('ReportPdfService', () => {
     });
 
     it('throws when BROWSER binding is absent', async () => {
-        const noRender = new ReportPdfService({} as D1Database, undefined, mockR2);
+        const noRender = new ReportPdfService({} as any, undefined, mockR2);
         await expect(
             noRender.renderAndStore(INSP_1, TENANT_A, 'full', { reportUrl: 'u', sourceVersion: 1 })
         ).rejects.toThrow(/BROWSER binding/);
     });
 
     it('throws when REPORTS bucket binding is absent', async () => {
-        const noStore = new ReportPdfService({} as D1Database, mockBrowser, undefined);
+        const noStore = new ReportPdfService({} as any, mockBrowser, undefined);
         await expect(
             noStore.renderAndStore(INSP_1, TENANT_A, 'full', { reportUrl: 'u', sourceVersion: 1 })
         ).rejects.toThrow(/REPORTS bucket/);
@@ -115,7 +111,7 @@ describe('ReportPdfService', () => {
             put: vi.fn(async () => undefined),
             get: vi.fn(async () => fakeBody),
         } as unknown as R2Bucket;
-        const s = new ReportPdfService({} as D1Database, mockBrowser, r2WithGet);
+        const s = new ReportPdfService({} as any, mockBrowser, r2WithGet);
         const rec = await s.renderAndStore(INSP_1, TENANT_A, 'full', { reportUrl: 'u', sourceVersion: 1 });
         const obj = await s.streamPdf(rec);
         expect(obj).toBe(fakeBody);

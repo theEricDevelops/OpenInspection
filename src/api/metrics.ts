@@ -2,7 +2,7 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { requireRole } from '../lib/middleware/rbac';
 import { HonoConfig } from '../types/hono';
 import { MetricsQuerySchema, MetricsApiResponseSchema } from '../lib/validations/metrics.schema';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { inspections, inspectionServices, contacts } from '../lib/db/schema';
 import { eq, and, gte, sql } from 'drizzle-orm';
 

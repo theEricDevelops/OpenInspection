@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq, ne } from 'drizzle-orm';
 import * as schema from '../lib/db/schema';
 import { logger } from '../lib/logger';
@@ -52,7 +53,7 @@ function parseServiceAreas(raw: string | null): InspectorProfile['serviceAreas']
  * write so customers can't claim names that shadow real route paths.
  */
 export class UserService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     private getDrizzle() {
         return drizzle(this.db);

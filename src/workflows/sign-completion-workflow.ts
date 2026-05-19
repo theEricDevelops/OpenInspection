@@ -35,36 +35,40 @@ export class SignCompletionWorkflow extends WorkflowEntrypoint<AppEnv, SignCompl
 
         // Step 1 — render canonical signed PDF (best-effort; if BR is not
         // provisioned at the account level, returns null + chain still extends)
-        const signedPdfMeta = await step.do('render-canonical-pdf', {
-            retries: { limit: 2, delay: '5 seconds', backoff: 'exponential' },
-            timeout: '2 minutes',
-        }, async () => {
-            try {
-                return await renderPdfToR2(env, {
-                    renderUrl: `${baseUrl(env)}/m2m/agreement-render/${token}`,
-                    r2Key: `tenants/${tenantId}/agreements/${requestId}/signed.pdf`,
-                });
-            } catch (e) {
-                console.warn('[sign-workflow] render-canonical-pdf failed (BR may not be provisioned)', { error: (e as Error).message });
-                return null;
-            }
-        });
+        const signedPdfMeta = await (
+            step.do('render-canonical-pdf', {
+                retries: { limit: 2, delay: '5 seconds', backoff: 'exponential' },
+                timeout: '2 minutes',
+            }, async () => {
+                try {
+                    return await renderPdfToR2(env, {
+                        renderUrl: `${baseUrl(env)}/m2m/agreement-render/${token}`,
+                        r2Key: `tenants/${tenantId}/agreements/${requestId}/signed.pdf`,
+                    });
+                } catch (e) {
+                    console.warn('[sign-workflow] render-canonical-pdf failed (BR may not be provisioned)', { error: (e as Error).message });
+                    return null;
+                }
+            }) as Promise<{ sha256: string } | null>
+        );
 
         // Step 2 — render Certificate of Completion PDF (also best-effort)
-        const certPdfMeta = await step.do('render-certificate-pdf', {
-            retries: { limit: 2, delay: '5 seconds', backoff: 'exponential' },
-            timeout: '2 minutes',
-        }, async () => {
-            try {
-                return await renderPdfToR2(env, {
-                    renderUrl: `${baseUrl(env)}/m2m/cert-render/${token}`,
-                    r2Key: `tenants/${tenantId}/agreements/${requestId}/certificate.pdf`,
-                });
-            } catch (e) {
-                console.warn('[sign-workflow] render-certificate-pdf failed (BR may not be provisioned)', { error: (e as Error).message });
-                return null;
-            }
-        });
+        const certPdfMeta = await (
+            step.do('render-certificate-pdf', {
+                retries: { limit: 2, delay: '5 seconds', backoff: 'exponential' },
+                timeout: '2 minutes',
+            }, async () => {
+                try {
+                    return await renderPdfToR2(env, {
+                        renderUrl: `${baseUrl(env)}/m2m/cert-render/${token}`,
+                        r2Key: `tenants/${tenantId}/agreements/${requestId}/certificate.pdf`,
+                    });
+                } catch (e) {
+                    console.warn('[sign-workflow] render-certificate-pdf failed (BR may not be provisioned)', { error: (e as Error).message });
+                    return null;
+                }
+            }) as Promise<{ sha256: string } | null>
+        );
 
         // Step 4 — append workflow.complete to the audit chain regardless of
         // PDF render success. The legally-meaningful 'agreement.signed' row is

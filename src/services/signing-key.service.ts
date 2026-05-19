@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { signingKeys } from '../lib/db/schema';
 import { logger } from '../lib/logger';
@@ -15,7 +16,7 @@ import { logger } from '../lib/logger';
  * Ed25519 algorithm at importKey time — current workerd supports it.
  */
 export class SigningKeyService {
-    constructor(private db: D1Database, private encryptionSecret: string) {
+    constructor(private db: SqliteDb, private encryptionSecret: string) {
         if (!encryptionSecret || encryptionSecret.length < 16) {
             throw new Error('SigningKeyService requires KEY_ENCRYPTION_SECRET (>=16 chars)');
         }

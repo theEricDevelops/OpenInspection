@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq, sql } from 'drizzle-orm';
 import { templates, inspections, inspectionResults } from '../lib/db/schema';
 import { tenantMarketplaceImportHistory } from '../lib/db/schema/marketplace';
@@ -47,7 +48,7 @@ interface MigrateOptions {
 export class TemplateMigrationService {
     private db: ReturnType<typeof drizzle>;
 
-    constructor(rawDb: D1Database, private tenantId: string) {
+    constructor(rawDb: SqliteDb, private tenantId: string) {
         this.db = drizzle(rawDb);
     }
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach , vi } from 'vitest';
 import { AdminService } from '../../src/services/admin.service';
 import { MockKV } from './mocks';
 import { createTestDb, setupSchema } from './db';
@@ -8,12 +8,6 @@ import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../../src/lib/db/schema';
 
 // Mock the drizzle-orm/d1 module to return our in-memory SQLite DB
-vi.mock('drizzle-orm/d1', () => ({
-    drizzle: vi.fn(),
-}));
-
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
-
 describe('AdminService', () => {
     let adminService: AdminService;
     let mockKV: MockKV;
@@ -25,8 +19,6 @@ describe('AdminService', () => {
         testDb = setup.db;
         sqlite = setup.sqlite;
         await setupSchema(sqlite);
-
-        (mockDrizzle as any).mockReturnValue(testDb);
         mockKV = new MockKV();
         
         // Seed a default tenant to satisfy foreign keys

@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and } from 'drizzle-orm';
 import { inspections, inspectionResults } from '../lib/db/schema';
 import { logger } from '../lib/logger';
@@ -15,7 +16,7 @@ import { Errors } from '../lib/errors';
  */
 export class AIService {
     constructor(
-        private db: D1Database,
+        private db: SqliteDb,
         private apiKey: string,
         private appMode?: 'standalone' | 'saas',
     ) {}

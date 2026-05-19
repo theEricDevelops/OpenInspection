@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { tenantConfigs, auditLogs } from '../lib/db/schema';
 
@@ -13,7 +14,7 @@ import { tenantConfigs, auditLogs } from '../lib/db/schema';
  *   - protocol mismatch (http vs https) is treated as a non-match
  */
 export class WidgetService {
-    constructor(private d1: D1Database) {}
+    constructor(private d1: SqliteDb) {}
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private db() { return drizzle(this.d1 as any); }

@@ -1,11 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, } from 'vitest';
 import { ContactService } from '../../src/services/contact.service';
 import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
 
 const TENANT_A = '00000000-0000-0000-0000-000000000001';
 const TENANT_B = '00000000-0000-0000-0000-000000000002';
@@ -37,9 +34,7 @@ describe('ContactService.listContacts inspectionCount', () => {
             { id: 'i-bob-ref', tenantId: TENANT_A, propertyAddress: '3 St', clientName: 'X', clientEmail: 'x@test.com', referredByAgentId: AGENT_BOB, date: '2026-06-03', status: 'draft', paymentStatus: 'unpaid', price: 0, agreementRequired: false, paymentRequired: false, createdAt: new Date() },
             { id: 'i-other-tenant', tenantId: TENANT_B, propertyAddress: '4 St', clientName: 'Jane', clientEmail: 'jane@test.com', date: '2026-06-04', status: 'draft', paymentStatus: 'unpaid', price: 0, agreementRequired: false, paymentRequired: false, createdAt: new Date() },
         ]);
-
-        (mockDrizzle as unknown as ReturnType<typeof vi.fn>).mockReturnValue(testDb);
-        svc = new ContactService({} as D1Database);
+        svc = new ContactService({} as any);
     });
 
     it('counts client inspections by clientEmail match within tenant', async () => {

@@ -5,9 +5,6 @@ import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
-
 const TENANT = '00000000-0000-0000-0000-000000000001';
 const USER = '00000000-0000-0000-0000-000000000010';
 
@@ -44,8 +41,7 @@ describe('UserService.getProfileBySlug — Sprint C-1', () => {
         ]);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
-        svc = new UserService({} as unknown as D1Database);
+        svc = new UserService({} as unknown as any);
     });
 
     afterEach(() => {

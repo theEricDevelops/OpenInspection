@@ -1,10 +1,10 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { Context } from 'hono';
-import { serveStatic } from 'hono/cloudflare-workers';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { deleteCookie, getCookie } from 'hono/cookie';
 import { verify } from 'hono/jwt';
 import { classifyJwtPayload } from './lib/auth/jwt-claims';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq, asc, desc, sql } from 'drizzle-orm';
 import { users } from './lib/db/schema';
 import * as schema from './lib/db/schema';
@@ -190,17 +190,17 @@ app.onError((err: unknown, c: Context<HonoConfig>) => {
 // Static assets
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const staticOpts = (opts: Record<string, string>): any => opts;
-app.get('/static/*', serveStatic(staticOpts({ root: './' })));
-app.get('/favicon.svg', serveStatic(staticOpts({ path: './favicon.svg' })));
-app.get('/logo.svg', serveStatic(staticOpts({ path: './logo.svg' })));
-app.get('/styles.css', serveStatic(staticOpts({ path: './styles.css' })));
-app.get('/manifest.json', serveStatic(staticOpts({ path: './manifest.json' })));
-app.get('/sw.js', serveStatic(staticOpts({ path: './sw.js' })));
-app.get('/js/*', serveStatic(staticOpts({ root: './' })));
-app.get('/css/*', serveStatic(staticOpts({ root: './' })));
-app.get('/vendor/*', serveStatic(staticOpts({ root: './' })));
-app.get('/fonts.css', serveStatic(staticOpts({ path: './fonts.css' })));
-app.get('/fonts/*', serveStatic(staticOpts({ root: './' })));
+app.get('/static/*', serveStatic(staticOpts({ root: './public' })));
+app.get('/favicon.svg', serveStatic(staticOpts({ path: './public/favicon.svg' })));
+app.get('/logo.svg', serveStatic(staticOpts({ path: './public/logo.svg' })));
+app.get('/styles.css', serveStatic(staticOpts({ path: './public/styles.css' })));
+app.get('/manifest.json', serveStatic(staticOpts({ path: './public/manifest.json' })));
+app.get('/sw.js', serveStatic(staticOpts({ path: './public/sw.js' })));
+app.get('/js/*', serveStatic(staticOpts({ root: './public' })));
+app.get('/css/*', serveStatic(staticOpts({ root: './public' })));
+app.get('/vendor/*', serveStatic(staticOpts({ root: './public' })));
+app.get('/fonts.css', serveStatic(staticOpts({ path: './public/fonts.css' })));
+app.get('/fonts/*', serveStatic(staticOpts({ root: './public' })));
 
 // Booking #7 Sprint C-1 — public R2 photo passthrough used by inspector
 // profile photos uploaded via POST /api/profile/photo. The R2 key is
@@ -216,7 +216,7 @@ app.get('/photos/tenants/:tenantId/inspector-photos/:filename', async (c) => {
     const headers = new Headers();
     obj.writeHttpMetadata(headers);
     headers.set('Cache-Control', 'public, max-age=86400');
-    headers.set('etag', obj.httpEtag);
+    headers.set('etag', obj.httpEtag ?? '');
     return new Response(obj.body, { headers });
 });
 
@@ -282,7 +282,7 @@ app.use('*', async (c, next) => {
     const authHeader = c.req.header('Authorization');
     const token = authHeader?.startsWith('Bearer ')
         ? authHeader.slice(7)
-        : getCookie(c, '__Host-inspector_token');
+        : getCookie(c, '__Host-inspector_token') ?? getCookie(c, 'inspector_token');
 
     if (!token) return next();
 
@@ -359,7 +359,8 @@ app.use('*', async (c, next) => {
 
     } catch (err: unknown) {
         // Clear the bad cookie so the browser stops re-sending it on every request.
-        deleteCookie(c, '__Host-inspector_token', { path: '/', secure: true, sameSite: 'Strict' });
+        const authName = c.req.url.startsWith('https') || (c.req.header('x-forwarded-proto') === 'https') ? '__Host-inspector_token' : 'inspector_token';
+deleteCookie(c, authName, { path: '/', secure: authName === '__Host-inspector_token', sameSite: 'Strict' });
         if (err instanceof AppError) throw err;
         const message = err instanceof Error ? err.message : String(err);
         logger.info(`[JWT] Token verification failed: ${message}`);
@@ -528,7 +529,7 @@ app.get('/login', async (c) => {
     // If user is already authenticated, redirect to the right dashboard.
     // Agent JWTs (role='agent') belong on /agent-dashboard, not the inspector
     // dashboard which would render an empty shell because agents have no tenant.
-    const token = getCookie(c, '__Host-inspector_token');
+    const token = getCookie(c, '__Host-inspector_token') ?? getCookie(c, 'inspector_token');
     if (token && c.env.JWT_SECRET) {
         try {
             const payload = await verify(token, c.env.JWT_SECRET, 'HS256');
@@ -1168,7 +1169,7 @@ app.get('/report/:id', async (c) => {
     try {
         const { getCookie } = await import('hono/cookie');
         const { verify } = await import('hono/jwt');
-        const tok = getCookie(c, '__Host-inspector_token');
+        const tok = getCookie(c, '__Host-inspector_token') ?? getCookie(c, 'inspector_token');
         if (tok && c.env.JWT_SECRET) {
             const payload = await verify(tok, c.env.JWT_SECRET, 'HS256');
             role = (payload as { role?: string })?.role ?? null;
@@ -1484,7 +1485,7 @@ app.get('/r/:id/repair-request', async (c) => {
     try {
         const { getCookie } = await import('hono/cookie');
         const { verify } = await import('hono/jwt');
-        const tok = getCookie(c, '__Host-inspector_token');
+        const tok = getCookie(c, '__Host-inspector_token') ?? getCookie(c, 'inspector_token');
         if (tok && c.env.JWT_SECRET) {
             const payload = await verify(tok, c.env.JWT_SECRET, 'HS256');
             role = (payload as { role?: string })?.role ?? null;
@@ -2323,13 +2324,7 @@ app.notFound((c) => {
     return c.html(NotFoundPage({ branding: c.get('branding') }), 404);
 });
 
-// CF Workers ESM expects { fetch, scheduled } on the default export.
-// Named exports of `scheduled` aren't recognized by the runtime —
-// without this `Handler does not export a scheduled() function` fires
-// on every cron tick and the automation flush never runs.
-import { scheduled } from './scheduled';
-export default {
-    fetch: app.fetch.bind(app),
-    scheduled,
-};
-export { SignCompletionWorkflow } from './workflows/sign-completion-workflow';
+export { app };
+
+// Legacy CF Workers export — kept for reference but no longer the entry point.
+// The Node.js server boots from src/server.ts.

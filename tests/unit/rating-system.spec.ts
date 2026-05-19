@@ -11,15 +11,12 @@
  *   - hardcoded recommendation enum has 50+ entries with unique slugs
  *   - report-utils + bucket mapping survives the new shape
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, } from 'vitest';
 import { RatingSystemService } from '../../src/services/rating-system.service';
 import { RECOMMENDATION_CATEGORIES, getRecommendationCategory, getRecommendationPhrase } from '../../src/lib/recommendation-categories';
 import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
 
 const TENANT_A = '00000000-0000-0000-0000-000000000001';
 const TENANT_B = '00000000-0000-0000-0000-000000000002';
@@ -40,7 +37,6 @@ describe('RatingSystemService — seed + tenant scope', () => {
         testDb = setup.db;
         await setupSchema(setup.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         svc = new RatingSystemService({} as any);
         await seedTenants(testDb);

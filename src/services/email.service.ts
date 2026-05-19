@@ -1,3 +1,4 @@
+import type { SqliteDb } from '../types/db';
 import { AppError, ErrorCode } from '../lib/errors';
 import { logger } from '../lib/logger';
 import { buildIcs, type IcsEvent } from '../lib/ics';
@@ -268,7 +269,7 @@ export class EmailService {
         recipient: 'client' | 'inspector',
         inspectionId: string,
         message: { body: string; fromName?: string | null },
-        deps: { db: D1Database; kv?: KVNamespace; baseUrl: string },
+        deps: { db: SqliteDb; kv?: KVNamespace; baseUrl: string },
     ): Promise<void> {
         if (!this.apiKey) return;
         const throttleKey = `msg_notify:${inspectionId}:${recipient}`;

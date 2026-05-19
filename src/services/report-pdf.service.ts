@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and } from 'drizzle-orm';
 import { reportPdfs, tenantConfigs } from '../lib/db/schema';
 import type { ReportPdf } from '../lib/db/schema';
@@ -28,7 +29,7 @@ export type ReportPdfStatus = 'queued' | 'rendering' | 'ready' | 'failed';
  */
 export class ReportPdfService {
     constructor(
-        private db: D1Database,
+        private db: SqliteDb,
         private browser: Fetcher | undefined,        // BROWSER binding (optional — falls back to text-only email)
         private r2: R2Bucket | undefined,            // REPORTS bucket binding (optional during local dev)
     ) {}

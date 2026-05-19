@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, or, lt, gte, lte, sql, inArray } from 'drizzle-orm';
 import { inspections, inspectionResults, templates, inspectionAgreements, users, services, inspectionServices, tenantConfigs, invoices, inspectionMediaPool } from '../lib/db/schema';
 import { contacts } from '../lib/db/schema/contact';
@@ -70,7 +71,7 @@ function sanitizeDefectStates(data: Record<string, unknown>): void {
  * automation_logs row, and report.published / inspection.confirmed /
  * inspection.cancelled / inspection.created automations never fired.
  */
-function fireAutomation(db: D1Database, tenantId: string, inspectionId: string, event: string): Promise<void> {
+function fireAutomation(db: SqliteDb, tenantId: string, inspectionId: string, event: string): Promise<void> {
     return new AutomationService(db)
         .trigger({ tenantId, inspectionId, triggerEvent: event, companyName: '', reportBaseUrl: '' })
         .catch(err => logger.error('automation trigger failed', { event }, err instanceof Error ? err : undefined));
@@ -131,7 +132,7 @@ export interface PropertyFacts {
  * Service to handle all inspection-related business logic.
  */
 export class InspectionService {
-    constructor(private db: D1Database, private r2?: R2Bucket, private sdb?: ScopedDB, private kv?: KVNamespace) {}
+    constructor(private db: SqliteDb, private r2?: R2Bucket, private sdb?: ScopedDB, private kv?: KVNamespace) {}
 
     private getDrizzle() {
         return drizzle(this.db);

@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and } from 'drizzle-orm';
 import { templates, inspections } from '../lib/db/schema';
 import { Errors } from '../lib/errors';
@@ -8,7 +9,7 @@ import { TemplateSchemaV2Schema } from '../lib/validations/template.schema';
  * Service to manage inspection templates.
  */
 export class TemplateService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     private getDrizzle() {
         return drizzle(this.db);

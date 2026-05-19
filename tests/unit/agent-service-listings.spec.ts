@@ -6,9 +6,6 @@ import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import type { EmailService } from '../../src/services/email.service';
 import { eq } from 'drizzle-orm';
 
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
-
 const T1 = '00000000-0000-0000-0000-000000000001';
 const T2 = '00000000-0000-0000-0000-000000000002';
 const AGENT_USER = '00000000-0000-0000-0000-000000000a01';
@@ -59,13 +56,11 @@ describe('AgentService.listReferrals — A2', () => {
             { id: 'other-agent-inspection', tenantId: T1, inspectorId: INSPECTOR_T1, propertyAddress: '99 Pine', clientName: 'Dan', date: '2026-06-04', status: 'draft', paymentStatus: 'unpaid', referredByAgentId: 'other-c1', price: 0, createdAt: new Date() },
             { id: 'no-referral-inspection', tenantId: T1, inspectorId: INSPECTOR_T1, propertyAddress: '11 Pine', clientName: 'Eve', date: '2026-06-05', status: 'draft', paymentStatus: 'unpaid', referredByAgentId: null, price: 0, createdAt: new Date() },
         ]);
-
-        (mockDrizzle as unknown as ReturnType<typeof vi.fn>).mockReturnValue(testDb);
         const stubEmail: Pick<EmailService, 'sendAgentInvite'> = {
             sendAgentInvite: vi.fn().mockResolvedValue(undefined),
         };
         svc = new AgentService(
-            {} as D1Database,
+            {} as any,
             stubEmail as unknown as EmailService,
             'https://acme.example.com',
         );
@@ -140,13 +135,11 @@ describe('AgentService.listInspectors — A2', () => {
             { id: 'l1', agentUserId: AGENT_USER, tenantId: T1, inspectorContactId: 'jane-c1', invitedByUserId: INSPECTOR_T1, status: 'active', createdAt: new Date() },
             { id: 'l2', agentUserId: AGENT_USER, tenantId: T2, inspectorContactId: 'jane-c2', invitedByUserId: INSPECTOR_T2, status: 'active', createdAt: new Date() },
         ]);
-
-        (mockDrizzle as unknown as ReturnType<typeof vi.fn>).mockReturnValue(testDb);
         const stubEmail: Pick<EmailService, 'sendAgentInvite'> = {
             sendAgentInvite: vi.fn().mockResolvedValue(undefined),
         };
         svc = new AgentService(
-            {} as D1Database,
+            {} as any,
             stubEmail as unknown as EmailService,
             'https://acme.example.com',
         );
@@ -211,13 +204,11 @@ describe('AgentService.revokeLink — A2', () => {
         await testDb.insert(schema.agentTenantLinks).values({
             id: 'l1', agentUserId: AGENT_USER, tenantId: T1, status: 'active', createdAt: new Date(),
         });
-
-        (mockDrizzle as unknown as ReturnType<typeof vi.fn>).mockReturnValue(testDb);
         const stubEmail: Pick<EmailService, 'sendAgentInvite'> = {
             sendAgentInvite: vi.fn().mockResolvedValue(undefined),
         };
         svc = new AgentService(
-            {} as D1Database,
+            {} as any,
             stubEmail as unknown as EmailService,
             'https://acme.example.com',
         );
@@ -251,13 +242,11 @@ describe('AgentService.updateProfile — A2', () => {
         await testDb.insert(schema.users).values({
             id: AGENT_USER, tenantId: null, email: 'jane@realty.com', role: 'agent', name: 'Jane', createdAt: new Date(), passwordHash: 'h',
         });
-
-        (mockDrizzle as unknown as ReturnType<typeof vi.fn>).mockReturnValue(testDb);
         const stubEmail: Pick<EmailService, 'sendAgentInvite'> = {
             sendAgentInvite: vi.fn().mockResolvedValue(undefined),
         };
         svc = new AgentService(
-            {} as D1Database,
+            {} as any,
             stubEmail as unknown as EmailService,
             'https://acme.example.com',
         );

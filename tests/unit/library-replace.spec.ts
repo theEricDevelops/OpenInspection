@@ -1,13 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, } from 'vitest';
 import { eq, and, isNull } from 'drizzle-orm';
 import { MarketplaceService } from '../../src/services/marketplace.service';
 import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import { marketplaceLibraries, tenantLibraryImports, tenantMarketplaceImportHistory } from '../../src/lib/db/schema/marketplace';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
 
 const TENANT = '00000000-0000-0000-0000-000000000001';
 const USER = 'user-1';
@@ -48,7 +45,6 @@ describe('MarketplaceService.updateLibraryImport — replace mode (S2-7)', () =>
             { id: TENANT, name: 'T', subdomain: 't', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
         ]);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         svc = new MarketplaceService(buildRawDb(testDb) as any, TENANT);
     });

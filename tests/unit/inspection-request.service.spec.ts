@@ -5,14 +5,11 @@
  * tenant isolation. Tests use the in-memory SQLite fixture from db.ts; the
  * fixture replays every migration so the new 0041 migration is exercised.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, } from 'vitest';
 import { InspectionRequestService } from '../../src/services/inspection-request.service';
 import { createTestDb, setupSchema } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
 
 const TENANT  = '00000000-0000-0000-0000-000000000001';
 const TENANT2 = '00000000-0000-0000-0000-000000000002';
@@ -28,8 +25,7 @@ describe('InspectionRequestService (Sprint 2 S2-2)', () => {
         testDb = fixture.db;
         await setupSchema(fixture.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
-        svc = new InspectionRequestService({} as D1Database);
+        svc = new InspectionRequestService({} as any);
 
         // Seed tenants + templates so create() can validate ownership.
         await testDb.insert(schema.tenants).values([

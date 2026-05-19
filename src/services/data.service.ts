@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, inArray } from 'drizzle-orm';
 import { inspections, contacts } from '../lib/db/schema';
 
@@ -29,7 +30,7 @@ function parseCSV(text: string): string[][] {
 }
 
 export class DataService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
     private getDrizzle() { return drizzle(this.db); }
 
     // ── Export ─────────────────────────────────────────────────────────────────

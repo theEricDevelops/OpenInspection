@@ -1,6 +1,6 @@
 import { MiddlewareHandler } from 'hono';
 import { eq, and } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { users } from '../db/schema';
 import { HonoConfig } from '../../types/hono';
 import { getBookingHost } from '../url';

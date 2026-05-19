@@ -1,13 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, } from 'vitest';
 import { WidgetService } from '../../src/services/widget.service';
 import { createTestDb, setupSchema } from './db';
 import { tenants, tenantConfigs, auditLogs } from '../../src/lib/db/schema';
 import * as schema from '../../src/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-
-vi.mock('drizzle-orm/d1', () => ({ drizzle: vi.fn() }));
-import { drizzle as mockDrizzle } from 'drizzle-orm/d1';
 
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -20,7 +17,6 @@ describe('WidgetService.isOriginAllowed', () => {
         testDb = setup.db;
         await setupSchema(setup.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(testDb);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         svc = new WidgetService({} as any);
 
@@ -52,7 +48,6 @@ describe('WidgetService.isOriginAllowed', () => {
         const setup2 = createTestDb();
         await setupSchema(setup2.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(setup2.db);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const svc2 = new WidgetService({} as any);
         const otherTenant = '00000000-0000-0000-0000-000000000002';
@@ -82,7 +77,6 @@ describe('WidgetService.recordEvent', () => {
         const setup = createTestDb();
         await setupSchema(setup.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockDrizzle as any).mockReturnValue(setup.db);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const svc = new WidgetService({} as any);
 

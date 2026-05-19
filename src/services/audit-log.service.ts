@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, desc, asc } from 'drizzle-orm';
 import { esignAuditLogs } from '../lib/db/schema';
 import { logger } from '../lib/logger';
@@ -22,7 +23,7 @@ export type AuditEvent =
  * verify() to recompute the same hash bytes.
  */
 export class AuditLogService {
-    constructor(private db: D1Database, private signingKeys: SigningKeyService) {}
+    constructor(private db: SqliteDb, private signingKeys: SigningKeyService) {}
 
     private getDrizzle() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

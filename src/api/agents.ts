@@ -1,11 +1,12 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { sign } from 'hono/jwt';
 import { setCookie } from 'hono/cookie';
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { desc, eq } from 'drizzle-orm';
 import type { HonoConfig } from '../types/hono';
 import { Errors } from '../lib/errors';
 import { requireRole } from '../lib/middleware/rbac';
+import { authCookieName } from '../lib/cookie';
 import { agentTenantLinks, users } from '../lib/db/schema/tenant';
 
 /**
@@ -142,9 +143,10 @@ agentsRoutes.openapi(acceptRoute, async (c) => {
         exp: now + 60 * 60 * 24,
     }, c.env.JWT_SECRET, 'HS256');
 
-    setCookie(c, '__Host-inspector_token', token, {
+    const cookieName = authCookieName(c);
+    setCookie(c, cookieName, token, {
         httpOnly: true,
-        secure: true,
+        secure: cookieName === '__Host-inspector_token',
         sameSite: 'Strict',
         path: '/',
         maxAge: 60 * 60 * 24,

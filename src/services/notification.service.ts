@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and, desc, isNull, inArray, sql } from 'drizzle-orm';
 import { notifications, users } from '../lib/db/schema';
 import { nanoid } from 'nanoid';
@@ -42,7 +43,7 @@ export interface ListResult {
  * have a durable feed they can review later without searching their inbox.
  */
 export class NotificationService {
-    constructor(private db: D1Database) {}
+    constructor(private db: SqliteDb) {}
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private getDrizzle() { return drizzle(this.db as any); }

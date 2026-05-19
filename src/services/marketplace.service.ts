@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/d1';
+import type { SqliteDb } from '../types/db';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, like, and, desc, sql } from 'drizzle-orm';
 import {
     marketplaceTemplates,
@@ -38,10 +39,10 @@ export interface UpdateLibraryImportResult {
 
 export class MarketplaceService {
   private db: ReturnType<typeof drizzle>;
-  private rawDb: D1Database;
+  private rawDb: SqliteDb;
   private tenantId: string;
 
-  constructor(db: D1Database, tenantId: string) {
+  constructor(db: SqliteDb, tenantId: string) {
     this.db = drizzle(db);
     this.rawDb = db;
     this.tenantId = tenantId;
@@ -387,7 +388,7 @@ export class MarketplaceService {
         }
         const stmt = `INSERT INTO comments (id, tenant_id, text, category, library_id, created_at) VALUES ${placeholders}`;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (this.rawDb as any).prepare(stmt).bind(...params).run();
+        (this.rawDb as any).prepare(stmt).run(...params);
         rowCount += batch.length;
       }
     } else {
@@ -528,7 +529,7 @@ export class MarketplaceService {
       }
       const stmt = `INSERT INTO comments (id, tenant_id, text, category, library_id, created_at) VALUES ${placeholders}`;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (this.rawDb as any).prepare(stmt).bind(...params).run();
+      (this.rawDb as any).prepare(stmt).run(...params);
       rowsAdded += batch.length;
     }
 

@@ -28,3 +28,7 @@ wrangler.*.toml
 .worktrees/
 .tsbuildinfo
 .claude/
+
+# pnpm (we use npm)
+pnpm-lock.yaml
+pnpm-workspace.yaml

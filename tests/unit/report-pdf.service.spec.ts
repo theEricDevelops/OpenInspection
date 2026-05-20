@@ -20,7 +20,7 @@ async function seed(testDb: BetterSQLite3Database<typeof schema>) {
 }
 
 const mockBrowser = { fetch: vi.fn() } as unknown as Fetcher;
-const mockR2 = { put: vi.fn(async () => undefined) } as unknown as R2Bucket;
+const mockR2 = { put: vi.fn(async () => undefined) } as unknown as import('../../src/lib/storage').ObjectStorage;
 
 describe('ReportPdfService', () => {
     let svc: ReportPdfService;
@@ -106,11 +106,11 @@ describe('ReportPdfService', () => {
     });
 
     it('streamPdf returns R2 object body for ready PDF', async () => {
-        const fakeBody = { body: 'STREAM' } as unknown as R2ObjectBody;
+        const fakeBody = { body: 'STREAM' } as unknown as import('../../src/lib/storage').StorageObject;
         const r2WithGet = {
             put: vi.fn(async () => undefined),
             get: vi.fn(async () => fakeBody),
-        } as unknown as R2Bucket;
+        } as unknown as import('../../src/lib/storage').ObjectStorage;
         const s = new ReportPdfService({} as any, mockBrowser, r2WithGet);
         const rec = await s.renderAndStore(INSP_1, TENANT_A, 'full', { reportUrl: 'u', sourceVersion: 1 });
         const obj = await s.streamPdf(rec);

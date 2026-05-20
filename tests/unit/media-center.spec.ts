@@ -36,7 +36,7 @@ describe.skip('InspectionService — Media Center (Round-2 backlog #9)', () => {
         await setupSchema(fixture.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         // Cast r2Mock to the R2Bucket shape we use (put/delete only).
-        svc = new InspectionService({} as any, r2Mock as unknown as R2Bucket);
+        svc = new InspectionService({} as any, r2Mock as unknown as import('../../src/lib/storage').ObjectStorage);
         r2Mock.put.mockClear();
         r2Mock.delete.mockClear();
 

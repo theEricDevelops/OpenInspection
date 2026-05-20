@@ -12,7 +12,7 @@ describe('generatePdfFromUrl', () => {
         };
         const url = 'https://example.com/report/abc';
 
-        const result = await generatePdfFromUrl(browser as unknown as Fetcher, url);
+        const result = await generatePdfFromUrl(browser as unknown as any, url);
 
         expect(result).toBeInstanceOf(ArrayBuffer);
         expect(result.byteLength).toBe(4);
@@ -30,7 +30,7 @@ describe('generatePdfFromUrl', () => {
         const browser = {
             fetch: vi.fn().mockResolvedValue({ ok: false, status: 503, text: () => Promise.resolve('quota exceeded') }),
         };
-        await expect(generatePdfFromUrl(browser as unknown as Fetcher, 'https://example.com'))
+        await expect(generatePdfFromUrl(browser as unknown as any, 'https://example.com'))
             .rejects.toThrow(/PDF rendering failed/i);
     });
 });

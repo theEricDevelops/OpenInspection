@@ -14,7 +14,7 @@ const DUMMY_HASH = 'pbkdf2:00000000000000000000000000000000:00000000000000000000
  * Decouples database operations from the HTTP routing layer.
  */
 export class AuthService {
-    constructor(private db: SqliteDb, private kv?: KVNamespace) {}
+    constructor(private db: SqliteDb, private kv?: import('../lib/cache').Cache) {}
 
     private getDrizzle() {
         return drizzle(this.db);

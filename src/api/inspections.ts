@@ -1352,7 +1352,8 @@ inspectionsRoutes.post('/:id/sign', async (c) => {
         inspectionId: id,
         signatureBase64: body.signatureBase64,
         signedAt: new Date(),
-        ipAddress: c.req.header('CF-Connecting-IP') || null,
+        ipAddress: c.req.header('X-Forwarded-For')?.split(',')[0].trim() ||
+                   c.req.header('X-Real-IP') || null,
         userAgent: c.req.header('User-Agent') || null,
     });
 
@@ -1414,7 +1415,7 @@ inspectionsRoutes.openapi(completeInspectionRoute, async (c) => {
         // never block inspection completion on an optional dependency.
         const deliver = async () => {
             try {
-                const pdf = await generatePdfFromUrl(c.env.BROWSER, reportUrl);
+                const pdf = await generatePdfFromUrl(c.env.PDF_RENDERER as any, reportUrl);
                 await c.var.services.email.sendInspectionReportPdf(clientEmail, address, reportUrl, pdf, sigInspector, sigHost);
             } catch (err) {
                 logger.error('[complete] PDF generation failed, falling back to text-only email',
@@ -1422,11 +1423,11 @@ inspectionsRoutes.openapi(completeInspectionRoute, async (c) => {
                 await c.var.services.email.sendReportReady(clientEmail, address, reportUrl, sigInspector, sigHost);
             }
         };
-        c.executionCtx.waitUntil(deliver());
+        void (deliver());
     }
 
     // B3: in-app notification for report ready
-    c.executionCtx.waitUntil(
+    void (
         c.var.services.notification.createForAllAdmins(tenantId, {
             type: 'report.published',
             title: `Report ready — ${inspection.propertyAddress ?? 'inspection'}`,
@@ -1495,7 +1496,7 @@ inspectionsRoutes.openapi(sendReportPdfRoute, async (c) => {
     const sigHost = getBookingHost(c);
 
     try {
-        const pdf = await generatePdfFromUrl(c.env.BROWSER, reportUrl);
+        const pdf = await generatePdfFromUrl(c.env.PDF_RENDERER as any, reportUrl);
         await c.var.services.email.sendInspectionReportPdf(recipient, address, reportUrl, pdf, sigInspector, sigHost);
         auditFromContext(c, 'inspection.send_pdf', 'inspection', { entityId: id, metadata: { recipient } });
         return c.json({ success: true as const, data: { sentTo: recipient } }, 200);
@@ -1774,7 +1775,7 @@ inspectionsRoutes.openapi(publishRoute, async (c) => {
                 logger.error('[publish] PDF render enqueue failed', { inspectionId: id }, err instanceof Error ? err : undefined);
             }
         };
-        c.executionCtx.waitUntil(renderBoth());
+        void (renderBoth());
     }
 
     return c.json({ success: true, data: result }, 200);
@@ -1814,7 +1815,7 @@ inspectionsRoutes.openapi(createRoute({
         reportPdf.markQueued(id, tenantId, 'summary'),
         reportPdf.markQueued(id, tenantId, 'full'),
     ]);
-    c.executionCtx.waitUntil((async () => {
+    void ((async () => {
         try {
             await Promise.allSettled([
                 reportPdf.renderAndStore(id, tenantId, 'summary', { reportUrl, sourceVersion }),

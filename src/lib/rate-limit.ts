@@ -3,13 +3,16 @@ import type { HonoConfig } from '../types/hono';
 import { Errors } from './errors';
 
 /**
- * Check the Cloudflare Rate Limiter for the given prefix + CF-Connecting-IP key.
- * No-ops when RATE_LIMITER binding is absent (local dev).
- * Throws RateLimited if the limit is exceeded.
+ * Rate limiting helper using a portable IP header.
+ * Prefers X-Forwarded-For (first value), falls back to X-Real-IP.
  */
 export async function checkRateLimit(c: Context<HonoConfig>, prefix: string): Promise<void> {
     if (!c.env.RATE_LIMITER) return;
-    const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
+
+    const forwarded = c.req.header('X-Forwarded-For');
+    const realIp = c.req.header('X-Real-IP');
+    const ip = forwarded?.split(',')[0].trim() || realIp || 'unknown';
+
     const { success } = await c.env.RATE_LIMITER.limit({ key: `${prefix}:${ip}` });
     if (!success) throw Errors.RateLimited();
 }

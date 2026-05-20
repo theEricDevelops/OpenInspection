@@ -1,7 +1,7 @@
 import type { SqliteDb } from './db';
 /**
- * Global environment bindings for the Cloudflare Worker.
- * Defines the expected resources from wrangler.toml.
+ * Global environment bindings for the portable server.
+ * Populated from process.env + injected service instances in src/server.ts.
  */
 export interface AppEnv {
     // Infrastructure
@@ -48,15 +48,13 @@ export interface AppEnv {
     // Rate Limiting
     RATE_LIMITER?: { limit(options: { key: string }): Promise<{ success: boolean }> };
 
-    // PDF Generation (Cloudflare Browser Rendering — beta)
-    BROWSER?: Fetcher;
+    // PDF Generation — injected by server.ts (Puppeteer/Playwright renderer).
+    // Portable replacement for Cloudflare Browser Rendering.
+    PDF_RENDERER?: import('../lib/pdf').PdfRenderer;
 
     // Report PDF storage (Spec 5A) — pre-rendered Summary + Full Report PDFs.
     // Optional during local dev so the worker boots without the binding.
     REPORTS?: import('../lib/storage').ObjectStorage;
-
-    // Spec 5H P1 — async sign-completion pipeline (signed.pdf + cert.pdf + audit append)
-    SIGN_COMPLETION_WORKFLOW?: Workflow;
 
     // Spec 5H — Public verifier base URL embedded in Certificate of Completion
     ESIGN_PUBLIC_VERIFY_BASE?: string;
@@ -77,6 +75,9 @@ export interface AppEnv {
     // entry. Matches the existing GOOGLE_PLACES_API_KEY graceful-degrade
     // pattern.
     ESTATED_API_KEY?: string;
+
+    // Phase 4a — Optional custom bot protection verify URL (reCAPTCHA, hCaptcha, etc.)
+    BOT_PROTECTION_VERIFY_URL?: string;
 
     // QuickBooks Online integration
     QBO_CLIENT_ID?: string;

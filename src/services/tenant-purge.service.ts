@@ -25,7 +25,7 @@ export interface PurgeResult {
 }
 
 export class TenantPurgeService {
-    constructor(private db: SqliteDb, private r2: R2Bucket, private kv: KVNamespace) {}
+    constructor(private db: SqliteDb, private r2: import('../lib/storage').ObjectStorage, private kv: import('../lib/cache').Cache) {}
 
     async purge(tenantId: string): Promise<PurgeResult> {
         const d = drizzle(this.db);

@@ -53,7 +53,7 @@ export async function diMiddleware(c: Context<HonoConfig>, next: Next) {
     const tenantId = c.get('tenantId');
     if (tenantId && (!c.env.RESEND_API_KEY || !c.env.GEMINI_API_KEY)) {
         try {
-            const bSvc = new BrandingService(c.env.DB, c.env.TENANT_CACHE);
+            const bSvc = new BrandingService(c.env.DB, c.env.TENANT_CACHE, c.env.PHOTOS);
             dbSecrets = await bSvc.getDecryptedSecrets(tenantId, c.env.JWT_SECRET);
         } catch {
             // Secrets not yet configured — proceed without them
@@ -92,7 +92,7 @@ export async function diMiddleware(c: Context<HonoConfig>, next: Next) {
                     target.booking = new BookingService(c.env.DB);
                     break;
                 case 'branding':
-                    target.branding = new BrandingService(c.env.DB, c.env.TENANT_CACHE);
+                    target.branding = new BrandingService(c.env.DB, c.env.TENANT_CACHE, c.env.PHOTOS);
                     break;
                 case 'email':
                     target.email = new EmailService(
@@ -168,7 +168,7 @@ export async function diMiddleware(c: Context<HonoConfig>, next: Next) {
                     target.templateSeed = new TemplateSeedService(c.env.DB);
                     break;
                 case 'reportPdf':
-                    target.reportPdf = new ReportPdfService(c.env.DB, c.env.BROWSER, c.env.REPORTS);
+                    target.reportPdf = new ReportPdfService(c.env.DB, c.env.PDF_RENDERER as any, c.env.REPORTS);
                     break;
                 case 'templateMigration':
                     target.templateMigration = new TemplateMigrationService(c.env.DB, c.get('tenantId'));

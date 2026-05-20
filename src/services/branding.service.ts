@@ -23,7 +23,7 @@ export interface SecretsConfig {
  * Also manages integration config (plaintext) and secrets (AES-GCM encrypted).
  */
 export class BrandingService {
-    constructor(private db: SqliteDb, private kv?: KVNamespace, private r2?: R2Bucket) {}
+    constructor(private db: SqliteDb, private kv?: import('../lib/cache').Cache, private r2?: import('../lib/storage').ObjectStorage) {}
 
     private getDrizzle() {
         return drizzle(this.db);
@@ -92,7 +92,7 @@ export class BrandingService {
             httpMetadata: { contentType: file.type },
         });
 
-        const logoUrl = `/api/inspections/photo/${key}`;
+        const logoUrl = `/photos/${key}`;
         await this.updateBranding(tenantId, { logoUrl });
 
         return logoUrl;

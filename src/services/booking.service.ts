@@ -117,11 +117,16 @@ export class BookingService {
     }
 
     /**
-     * Internal helper to verify bot protection (Turnstile).
+     * Internal helper to verify bot protection.
+     * Supports Turnstile (default), reCAPTCHA, and hCaptcha via verifyUrl.
      */
-    async verifyBotProtection(token: string, secret: string) {
+    async verifyBotProtection(
+        token: string,
+        secret: string,
+        verifyUrl = 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+    ) {
         try {
-            const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            const res = await fetch(verifyUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ secret, response: token }),
@@ -129,7 +134,7 @@ export class BookingService {
             const data = await res.json() as { success: boolean };
             return data.success;
         } catch (e) {
-            logger.error('[bot-protection] Turnstile verification failed', {}, e instanceof Error ? e : undefined);
+            logger.error('[bot-protection] verification failed', {}, e instanceof Error ? e : undefined);
             return false;
         }
     }

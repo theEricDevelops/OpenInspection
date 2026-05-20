@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq, and } from 'drizzle-orm';
 import { reportPdfs, tenantConfigs } from '../lib/db/schema';
 import type { ReportPdf } from '../lib/db/schema';
-import { generatePdfFromUrl } from '../lib/pdf';
+import { generatePdfFromUrl, type PdfRenderer } from '../lib/pdf';
 import { Errors } from '../lib/errors';
 
 export type ReportPdfType = 'summary' | 'full';
@@ -30,8 +30,8 @@ export type ReportPdfStatus = 'queued' | 'rendering' | 'ready' | 'failed';
 export class ReportPdfService {
     constructor(
         private db: SqliteDb,
-        private browser: Fetcher | undefined,        // BROWSER binding (optional — falls back to text-only email)
-        private r2: import('../lib/storage').ObjectStorage | undefined,            // REPORTS bucket binding (optional during local dev)
+        private pdfRenderer: PdfRenderer | undefined,   // Portable PDF renderer (Puppeteer/Playwright or undefined)
+        private r2: import('../lib/storage').ObjectStorage | undefined,
     ) {}
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,7 +81,7 @@ export class ReportPdfService {
         type: ReportPdfType,
         opts: { reportUrl: string; sourceVersion: number },
     ): Promise<ReportPdf> {
-        if (!this.browser) throw Errors.BadRequest('PDF rendering unavailable: BROWSER binding not configured');
+        if (!this.pdfRenderer) throw Errors.BadRequest('PDF rendering unavailable: PdfRenderer not configured');
         if (!this.r2) throw Errors.BadRequest('PDF storage unavailable: REPORTS bucket binding not configured');
 
         // type=summary appends &summary=1 so the report template can render
@@ -91,7 +91,7 @@ export class ReportPdfService {
             ? (opts.reportUrl.includes('?') ? `${opts.reportUrl}&summary=1` : `${opts.reportUrl}?summary=1`)
             : opts.reportUrl;
 
-        const pdfBuffer = await generatePdfFromUrl(this.browser, renderUrl);
+        const pdfBuffer = await generatePdfFromUrl(this.pdfRenderer, renderUrl);
         const r2Key = `${tenantId}/${inspectionId}/${type}.pdf`;
         await this.r2.put(r2Key, pdfBuffer);
 

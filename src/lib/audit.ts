@@ -119,7 +119,8 @@ export function auditFromContext(
         entityType,
         entityId: options?.entityId,
         metadata: options?.metadata,
-        ipAddress: c.req.header('CF-Connecting-IP'),
+        ipAddress: c.req.header('X-Forwarded-For')?.split(',')[0].trim() ||
+                   c.req.header('X-Real-IP') || undefined,
         executionCtx: c.executionCtx,
     });
 }

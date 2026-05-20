@@ -19,7 +19,7 @@ export class KvLockHeldError extends Error {
 }
 
 export async function withKvLock<T>(
-    kv: KVNamespace,
+    kv: import('../lib/cache').Cache,
     key: string,
     ttlSeconds: number,
     fn: () => Promise<T>,

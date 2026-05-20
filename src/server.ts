@@ -8,6 +8,8 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { LocalStorage } from './lib/storage';
 import { MemoryCache } from './lib/cache';
+import { PuppeteerPdfRenderer } from './lib/pdf-puppeteer';
+import cron from 'node-cron';
 
 const PORT = parseInt(process.env.PORT || '8788', 10);
 const DB_PATH = process.env.DB_PATH || resolve(process.cwd(), 'data/openinspection.db');
@@ -54,6 +56,7 @@ const env = {
     REPORTS: storage,
     PHOTO_BUCKET: storage,
     TENANT_CACHE: tenantCache,
+    PDF_RENDERER: process.env.PUPPETEER_ENABLED === 'true' ? new PuppeteerPdfRenderer() : undefined,
 } as Record<string, unknown>;
 
 const executionCtx = {
@@ -68,5 +71,18 @@ serve(
     },
     (info) => {
         console.log(`OpenInspection server running on http://localhost:${info.port}`);
+
+        // Phase 4d — Portable cron jobs using node-cron
+        // QBO CDC sync (hourly)
+        cron.schedule('0 * * * *', async () => {
+            try {
+                const { scheduled } = await import('./scheduled');
+                await scheduled({} as any, env as any, {} as any);
+            } catch (e) {
+                console.error('[cron] scheduled job failed', e);
+            }
+        });
+
+        console.log('[cron] Scheduled jobs initialized (node-cron)');
     },
 );

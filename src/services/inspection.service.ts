@@ -132,7 +132,7 @@ export interface PropertyFacts {
  * Service to handle all inspection-related business logic.
  */
 export class InspectionService {
-    constructor(private db: SqliteDb, private r2?: R2Bucket, private sdb?: ScopedDB, private kv?: KVNamespace) {}
+    constructor(private db: SqliteDb, private r2?: import('../lib/storage').ObjectStorage, private sdb?: ScopedDB, private kv?: import('../lib/cache').Cache) {}
 
     private getDrizzle() {
         return drizzle(this.db);

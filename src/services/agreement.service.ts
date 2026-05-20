@@ -140,6 +140,8 @@ export class AgreementService {
             throw Errors.NotFound('Agreement template not found');
         }
 
+        // Delete dependent rows first to avoid FK constraint errors
+        await db.delete(agreementRequests).where(and(eq(agreementRequests.agreementId, id), eq(agreementRequests.tenantId, tenantId)));
         await db.delete(agreements).where(and(eq(agreements.id, id), eq(agreements.tenantId, tenantId)));
     }
 

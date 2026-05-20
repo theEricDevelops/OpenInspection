@@ -11,7 +11,7 @@ import { RECOMMENDATION_SEEDS } from '../../data/recommendation-seeds';
  * Used in the SaaS version where Core is tightly coupled with the SaaS Portal.
  */
 export class PortalProvider implements IntegrationProvider {
-    constructor(private db: SqliteDb, private kv?: KVNamespace) {}
+    constructor(private db: SqliteDb, private kv?: import('../cache').Cache) {}
 
     private getDrizzle() {
         return drizzle(this.db);

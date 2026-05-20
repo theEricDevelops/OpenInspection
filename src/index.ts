@@ -11,7 +11,6 @@ import * as schema from './lib/db/schema';
 import { join } from 'node:path';
 
 import { brandingMiddleware } from './lib/middleware/branding';
-import { brandingMiddleware } from './lib/middleware/branding';
 import { inspectorPaletteMiddleware } from './lib/middleware/inspector-palette';
 import { tenantRouter } from './lib/middleware/tenant-router';
 import { diMiddleware } from './lib/middleware/di';
@@ -214,6 +213,33 @@ app.get('/photos/tenants/:tenantId/inspector-photos/:filename', async (c) => {
     const filename = c.req.param('filename');
     if (!c.env.PHOTOS) return c.notFound();
     const key = `tenants/${tenantId}/inspector-photos/${filename}`;
+    const obj = await c.env.PHOTOS.get(key);
+    if (!obj) return c.notFound();
+    const headers = new Headers();
+    obj.writeHttpMetadata(headers);
+    headers.set('Cache-Control', 'public, max-age=86400');
+    headers.set('etag', obj.httpEtag ?? '');
+    return new Response(obj.body, { headers });
+});
+
+// General photo serving for branding logos, etc. (portable LocalStorage / S3)
+app.get('/photos/*', async (c) => {
+    const key = c.req.path.replace(/^\/photos\//, '');
+    if (!c.env.PHOTOS) return c.notFound();
+    const obj = await c.env.PHOTOS.get(key);
+    if (!obj) return c.notFound();
+    const headers = new Headers();
+    obj.writeHttpMetadata(headers);
+    headers.set('Cache-Control', 'public, max-age=86400');
+    headers.set('etag', obj.httpEtag ?? '');
+    return new Response(obj.body, { headers });
+});
+
+// Temporary compatibility route for old branding logo URLs
+// (can be removed after all tenants have re-uploaded their logos)
+app.get('/api/inspections/photo/branding/*', async (c) => {
+    const key = c.req.path.replace('/api/inspections/photo/', '');
+    if (!c.env.PHOTOS) return c.notFound();
     const obj = await c.env.PHOTOS.get(key);
     if (!obj) return c.notFound();
     const headers = new Headers();
@@ -790,9 +816,10 @@ app.get('/agreements/sign/:token', async (c) => {
         // Spec 5H P0 — append request.viewed to the audit chain (best-effort).
         try {
             await c.var.services.auditLog.append(request.tenantId, request.id, 'request.viewed', {
-                country: c.req.header('cf-ipcountry') || null,
+                country: c.req.header('X-Geo-Country') || c.req.header('cf-ipcountry') || null,
                 envelopeId: request.id,
-                ip: c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || null,
+                ip: c.req.header('X-Forwarded-For')?.split(',')[0].trim() ||
+                    c.req.header('X-Real-IP') || null,
                 tsMs: Date.now(),
                 ua: (c.req.header('user-agent') || '').slice(0, 200) || null,
             });

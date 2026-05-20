@@ -11,7 +11,7 @@
         "noUnusedParameters": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
-        "exactOptionalPropertyTypes": true,
+        "exactOptionalPropertyTypes": false,
         "jsx": "react-jsx",
         "jsxImportSource": "hono/jsx",
         "resolveJsonModule": true,
@@ -24,6 +24,6 @@
         "tsBuildInfoFile": "./.tsbuildinfo",
         "paths": {}
     },
-    "include": ["src/**/*", "tests/**/*", "scripts/**/*", "playwright.config.ts", "playwright.config.integration.ts", "playwright.config.remote.ts", "worker-configuration.d.ts", "vitest.config.ts"],
+    "include": ["src/**/*", "tests/**/*", "scripts/**/*", "playwright.config.ts", "playwright.config.integration.ts", "playwright.config.remote.ts", "vitest.config.ts", "src/types/cloudflare-stubs.d.ts", "src/types/cloudflare-workers.d.ts"],
     "exclude": ["node_modules", "dist"]
 }

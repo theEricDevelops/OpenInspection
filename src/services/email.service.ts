@@ -269,7 +269,7 @@ export class EmailService {
         recipient: 'client' | 'inspector',
         inspectionId: string,
         message: { body: string; fromName?: string | null },
-        deps: { db: SqliteDb; kv?: KVNamespace; baseUrl: string },
+        deps: { db: SqliteDb; kv?: import('../lib/cache').Cache; baseUrl: string },
     ): Promise<void> {
         if (!this.apiKey) return;
         const throttleKey = `msg_notify:${inspectionId}:${recipient}`;

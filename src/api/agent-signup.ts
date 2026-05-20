@@ -69,7 +69,8 @@ agentSignupRoutes.openapi(signupRoute, async (c) => {
         }
         let ok = false;
         try {
-            ok = await verifyTurnstile(body.turnstileToken, c.env.TURNSTILE_SECRET_KEY);
+            const verifyUrl = c.env.BOT_PROTECTION_VERIFY_URL as string | undefined;
+            ok = await verifyTurnstile(body.turnstileToken, c.env.TURNSTILE_SECRET_KEY, verifyUrl);
         } catch (err) {
             logger.warn('agent.signup.turnstile.failed', {
                 error: err instanceof Error ? err.message : String(err),

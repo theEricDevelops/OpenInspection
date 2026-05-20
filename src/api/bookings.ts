@@ -195,7 +195,12 @@ bookingsRoutes.openapi(createBookingRoute, async (c) => {
     // Bot Protection — always enforce when secret is configured
     if (c.env.TURNSTILE_SECRET_KEY) {
         if (!body.turnstileToken) throw Errors.Forbidden('Security verification token missing.');
-        const isValid = await service.verifyBotProtection(body.turnstileToken, c.env.TURNSTILE_SECRET_KEY);
+        const verifyUrl = c.env.BOT_PROTECTION_VERIFY_URL as string | undefined;
+        const isValid = await service.verifyBotProtection(
+            body.turnstileToken,
+            c.env.TURNSTILE_SECRET_KEY,
+            verifyUrl,
+        );
         if (!isValid) throw Errors.Forbidden('Security verification failed.');
     }
 
@@ -366,8 +371,8 @@ bookingsRoutes.openapi(createBookingRoute, async (c) => {
         'custom':    body.customTime ? `${body.customTime}` : 'Custom time',
     };
 
-    // Async tasks
-    c.executionCtx.waitUntil((async () => {
+    // Async tasks (portable fire-and-forget)
+    void (async () => {
         const inspector = await db.select().from(users).where(eq(users.id, inspectorId!)).get();
         if (inspector?.googleRefreshToken && inspector?.googleCalendarId) {
             const startDateTime = `${body.date}T${requestedTime}:00Z`;
@@ -427,16 +432,14 @@ bookingsRoutes.openapi(createBookingRoute, async (c) => {
             sigInspector,
             getBookingHost(c),
         ).catch(e => logger.error('Booking confirmation email failed', {}, e instanceof Error ? e : undefined));
-    })());
+    })();
 
     if (isWidgetSubmit) {
-        c.executionCtx.waitUntil(
-            c.var.services.widget.recordEvent(tenantId, 'success', { origin: originHeader, inspectionId })
-        );
+        void c.var.services.widget.recordEvent(tenantId, 'success', { origin: originHeader, inspectionId });
     }
 
     // B3: in-app notification for the inspector workspace
-    c.executionCtx.waitUntil(
+    void (async () => {
         c.var.services.notification.createForAllAdmins(tenantId, {
             type: 'booking.received',
             title: `New booking — ${body.address ?? 'no address'}`,
@@ -444,8 +447,8 @@ bookingsRoutes.openapi(createBookingRoute, async (c) => {
             entityType: 'inspection',
             entityId: inspectionId,
             metadata: { source: isWidgetSubmit ? 'widget' : 'public_form' },
-        })
-    );
+        });
+    })();
 
     return c.json({
         success: true,
@@ -546,7 +549,7 @@ bookingsRoutes.openapi(signAgreementRoute, async (c) => {
         try {
             const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || null;
             const ua = (c.req.header('user-agent') || '').slice(0, 200) || null;
-            const country = c.req.header('cf-ipcountry') || null;
+            const country = c.req.header('X-Geo-Country') || c.req.header('cf-ipcountry') || null;
             // Hash the signature image for cert reference (full image stored in DB)
             const sigBytes = (() => {
                 try {
@@ -576,20 +579,20 @@ bookingsRoutes.openapi(signAgreementRoute, async (c) => {
 
     const signed = await svc.signRequest(token, signatureBase64);
 
-    // Spec 5H P1 — trigger async sign-completion workflow (renders signed.pdf
-    // + Certificate of Completion + appends 'workflow.complete' to audit chain).
-    // Fire-and-forget: client doesn't wait. Workflow has its own retry policy.
-    if (request && c.env.SIGN_COMPLETION_WORKFLOW) {
-        c.executionCtx.waitUntil((async () => {
+    // Spec 5H P1 — trigger portable sign-completion (replaces Cloudflare Workflow)
+    if (request) {
+        void (async () => {
             try {
-                await c.env.SIGN_COMPLETION_WORKFLOW!.create({
-                    id: request.id, // workflow id = requestId for idempotency / re-run
-                    params: { requestId: request.id, tenantId: request.tenantId, token },
-                });
+                const { runSignCompletion } = await import('../workflows/sign-completion');
+                await runSignCompletion(
+                    { requestId: request.id, tenantId: request.tenantId, token },
+                    c.env as any,
+                    c.env.PDF_RENDERER as any,
+                );
             } catch (e) {
-                logger.warn('sign-workflow.create.failed', { requestId: request.id, error: (e as Error).message });
+                logger.warn('sign-completion.failed', { requestId: request.id, error: (e as Error).message });
             }
-        })());
+        })();
     }
 
     // Round 14 free-tier structured log — kept alongside the persisted audit
@@ -602,11 +605,11 @@ bookingsRoutes.openapi(signAgreementRoute, async (c) => {
         signedAt: new Date().toISOString(),
         signerIp: c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || null,
         signerUserAgent: (c.req.header('user-agent') || '').slice(0, 200) || null,
-        signerCountry: c.req.header('cf-ipcountry') || null,
+        signerCountry: c.req.header('X-Geo-Country') || c.req.header('cf-ipcountry') || null,
     });
 
     // B3: in-app notification — fetch agreement name for richer title
-    c.executionCtx.waitUntil((async () => {
+    void ((async () => {
         try {
             const agreement = await svc.getAgreementByToken(token);
             await c.var.services.notification.createForAllAdmins(signed.tenantId, {
@@ -641,7 +644,7 @@ bookingsRoutes.openapi(signAgreementRoute, async (c) => {
     // so both parties have a record). Spec 5H envelope verifier URL is the
     // tamper-evident receipt; we pass it as the email CTA.
     if (request && signed.clientEmail) {
-        c.executionCtx.waitUntil((async () => {
+        void ((async () => {
             try {
                 const baseUrl = (c.env.APP_BASE_URL || '').replace(/\/$/, '') || (() => {
                     const host = c.req.header('host');

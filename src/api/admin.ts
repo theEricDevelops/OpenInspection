@@ -112,7 +112,7 @@ adminRoutes.openapi(inviteMemberRoute, async (c) => {
 
     const emailPromise = c.var.services.email.sendInvitation(body.email, inviteLink)
         .catch(() => { /* email delivery is best-effort */ });
-    c.executionCtx.waitUntil(emailPromise);
+    void emailPromise; // fire-and-forget (portable replacement for executionCtx.waitUntil)
 
     return c.json({ success: true, data: { inviteLink, expiresAt: expiresAt.toISOString() } }, 201);
 });

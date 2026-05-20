@@ -74,10 +74,11 @@
     window.themeMenu = function () {
         return {
             open: false,
-            get mode() { return currentMode(); },
+            mode: currentMode(),
             set: function (m) {
                 this.open = false;
                 window.setColorScheme(m);
+                this.mode = m; // immediate reactive update for checkmarks
             },
         };
     };
@@ -92,4 +93,6 @@
             updateUI();
         }
     });
+
+
 })();

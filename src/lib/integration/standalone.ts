@@ -168,7 +168,7 @@ function seedDefaultServices(db: SqliteDb, tenantId: string): void {
  * Used in the open-source version where Core is managed directly or via local CLI/Admin UI.
  */
 export class StandaloneProvider implements IntegrationProvider {
-    constructor(private db: SqliteDb, private kv?: KVNamespace) {}
+    constructor(private db: SqliteDb, private kv?: import('../cache').Cache) {}
 
     private getDrizzle() {
         return drizzle(this.db);

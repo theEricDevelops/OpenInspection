@@ -11,7 +11,7 @@ export interface ExportManifest {
 }
 
 export class DataExportService {
-    constructor(private db: SqliteDb, private r2: R2Bucket) {}
+    constructor(private db: SqliteDb, private r2: import('../lib/storage').ObjectStorage) {}
 
     async buildZip(tenantId: string): Promise<{ buffer: Uint8Array; manifest: ExportManifest }> {
         const d = drizzle(this.db);

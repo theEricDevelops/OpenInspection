@@ -18,6 +18,7 @@ backups/
 .env*
 .dev.vars*
 test-results/
+.playwright*
 
 # Cloudflare config
 wrangler.*.toml
@@ -32,3 +33,4 @@ wrangler.*.toml
 # pnpm (we use npm)
 pnpm-lock.yaml
 pnpm-workspace.yaml
+docs/cloudflare-migration-plan.md

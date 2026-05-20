@@ -6,8 +6,8 @@ import type { SqliteDb } from './db';
 export interface AppEnv {
     // Infrastructure
     DB: SqliteDb;
-    TENANT_CACHE: KVNamespace;
-    PHOTOS: R2Bucket;
+    TENANT_CACHE: import('../lib/cache').Cache;
+    PHOTOS: import('../lib/storage').ObjectStorage;
     
     // Security & Auth
     JWT_SECRET: string;
@@ -53,7 +53,7 @@ export interface AppEnv {
 
     // Report PDF storage (Spec 5A) — pre-rendered Summary + Full Report PDFs.
     // Optional during local dev so the worker boots without the binding.
-    REPORTS?: R2Bucket;
+    REPORTS?: import('../lib/storage').ObjectStorage;
 
     // Spec 5H P1 — async sign-completion pipeline (signed.pdf + cert.pdf + audit append)
     SIGN_COMPLETION_WORKFLOW?: Workflow;

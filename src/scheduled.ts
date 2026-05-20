@@ -10,7 +10,7 @@ import { logger } from './lib/logger';
 
 export interface ScheduledEnv {
     DB: SqliteDb;
-    PHOTOS?: R2Bucket;
+    PHOTOS?: import('./lib/storage').ObjectStorage;
     RESEND_API_KEY?: string;
     SENDER_EMAIL?: string;
     APP_NAME?: string;
@@ -52,13 +52,13 @@ async function runQBOCDC(env: ScheduledEnv): Promise<void> {
     }
 }
 
-async function cleanupPendingAttachments(photos: R2Bucket): Promise<void> {
+async function cleanupPendingAttachments(photos: import('./lib/storage').ObjectStorage): Promise<void> {
     const cutoff = Date.now() - 24 * 60 * 60 * 1000;
     let cursor: string | undefined = undefined;
     let deleted = 0;
     do {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const list: R2Objects = await (photos as any).list({ cursor, limit: 1000 });
+        const list: import('./lib/storage').StorageListResult = await (photos as any).list({ cursor, limit: 1000 });
         for (const obj of list.objects) {
             if (obj.key.includes('/messages/_pending/') && obj.uploaded.getTime() < cutoff) {
                 await photos.delete(obj.key);

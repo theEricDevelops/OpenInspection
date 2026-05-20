@@ -8,7 +8,9 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq, asc, desc, sql } from 'drizzle-orm';
 import { users } from './lib/db/schema';
 import * as schema from './lib/db/schema';
+import { join } from 'node:path';
 
+import { brandingMiddleware } from './lib/middleware/branding';
 import { brandingMiddleware } from './lib/middleware/branding';
 import { inspectorPaletteMiddleware } from './lib/middleware/inspector-palette';
 import { tenantRouter } from './lib/middleware/tenant-router';
@@ -190,17 +192,18 @@ app.onError((err: unknown, c: Context<HonoConfig>) => {
 // Static assets
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const staticOpts = (opts: Record<string, string>): any => opts;
-app.get('/static/*', serveStatic(staticOpts({ root: './public' })));
-app.get('/favicon.svg', serveStatic(staticOpts({ path: './public/favicon.svg' })));
-app.get('/logo.svg', serveStatic(staticOpts({ path: './public/logo.svg' })));
-app.get('/styles.css', serveStatic(staticOpts({ path: './public/styles.css' })));
-app.get('/manifest.json', serveStatic(staticOpts({ path: './public/manifest.json' })));
-app.get('/sw.js', serveStatic(staticOpts({ path: './public/sw.js' })));
-app.get('/js/*', serveStatic(staticOpts({ root: './public' })));
-app.get('/css/*', serveStatic(staticOpts({ root: './public' })));
-app.get('/vendor/*', serveStatic(staticOpts({ root: './public' })));
-app.get('/fonts.css', serveStatic(staticOpts({ path: './public/fonts.css' })));
-app.get('/fonts/*', serveStatic(staticOpts({ root: './public' })));
+const publicRoot = join(process.cwd(), 'public');
+app.get('/static/*', serveStatic(staticOpts({ root: publicRoot })));
+app.get('/favicon.svg', serveStatic(staticOpts({ path: join(publicRoot, 'favicon.svg') })));
+app.get('/logo.svg', serveStatic(staticOpts({ path: join(publicRoot, 'logo.svg') })));
+app.get('/styles.css', serveStatic(staticOpts({ path: join(publicRoot, 'styles.css') })));
+app.get('/manifest.json', serveStatic(staticOpts({ path: join(publicRoot, 'manifest.json') })));
+app.get('/sw.js', serveStatic(staticOpts({ path: join(publicRoot, 'sw.js') })));
+app.get('/js/*', serveStatic(staticOpts({ root: publicRoot })));
+app.get('/css/*', serveStatic(staticOpts({ root: publicRoot })));
+app.get('/vendor/*', serveStatic(staticOpts({ root: publicRoot })));
+app.get('/fonts.css', serveStatic(staticOpts({ path: join(publicRoot, 'fonts.css') })));
+app.get('/fonts/*', serveStatic(staticOpts({ root: publicRoot })));
 
 // Booking #7 Sprint C-1 — public R2 photo passthrough used by inspector
 // profile photos uploaded via POST /api/profile/photo. The R2 key is

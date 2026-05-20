@@ -31,7 +31,7 @@ export class ReportPdfService {
     constructor(
         private db: SqliteDb,
         private browser: Fetcher | undefined,        // BROWSER binding (optional — falls back to text-only email)
-        private r2: R2Bucket | undefined,            // REPORTS bucket binding (optional during local dev)
+        private r2: import('../lib/storage').ObjectStorage | undefined,            // REPORTS bucket binding (optional during local dev)
     ) {}
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -134,13 +134,13 @@ export class ReportPdfService {
     /**
      * Stream a PDF object from R2. Proxy pattern (mirrors PHOTOS bucket usage):
      * caller — typically GET /api/inspections/:id/pdf — returns the body as a
-     * Response with the right Content-Type. Returning the R2ObjectBody (rather
+     * Response with the right Content-Type. Returning the StorageObject (rather
      * than a presigned URL) avoids needing the S3-compatible API creds.
      *
      * Returns null when the object is missing in R2 (rare — shouldn't happen
      * if the D1 row says status='ready', but guard anyway).
      */
-    async streamPdf(record: ReportPdf): Promise<R2ObjectBody | null> {
+    async streamPdf(record: ReportPdf): Promise<import('../lib/storage').StorageObject | null> {
         if (!this.r2) throw Errors.BadRequest('PDF storage unavailable: REPORTS bucket binding not configured');
         if (record.status !== 'ready') {
             throw Errors.BadRequest(`PDF not ready (status=${record.status})`);

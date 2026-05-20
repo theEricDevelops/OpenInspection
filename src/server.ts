@@ -3,15 +3,22 @@ import { serve } from '@hono/node-server';
 import { DatabaseConstructor } from './types/db';
 import type { SqliteDb } from './types/db';
 import { app } from './index';
-import { readdirSync, existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readdirSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { LocalStorage } from './lib/storage';
+import { MemoryCache } from './lib/cache';
 
 const PORT = parseInt(process.env.PORT || '8788', 10);
-const DB_PATH = process.env.DB_PATH || ':memory:';
+const DB_PATH = process.env.DB_PATH || resolve(process.cwd(), 'data/openinspection.db');
+const STORAGE_DIR = process.env.STORAGE_DIR || resolve(process.cwd(), 'data/storage');
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 function initDatabase(): SqliteDb {
+    const dbDir = resolve(dirname(DB_PATH));
+    if (!existsSync(dbDir)) {
+        mkdirSync(dbDir, { recursive: true });
+    }
     const sqlite = new DatabaseConstructor(DB_PATH);
     sqlite.pragma('journal_mode = WAL');
     sqlite.exec(`CREATE TABLE IF NOT EXISTS _migrations (
@@ -35,9 +42,18 @@ function initDatabase(): SqliteDb {
 }
 
 const db = initDatabase();
+if (!existsSync(STORAGE_DIR)) {
+    mkdirSync(STORAGE_DIR, { recursive: true });
+}
+const storage = new LocalStorage(STORAGE_DIR);
+const tenantCache = new MemoryCache();
 const env = {
     ...process.env,
     DB: db,
+    PHOTOS: storage,
+    REPORTS: storage,
+    PHOTO_BUCKET: storage,
+    TENANT_CACHE: tenantCache,
 } as Record<string, unknown>;
 
 const executionCtx = {

@@ -39,8 +39,12 @@ console.log('  vendor/dexie.mjs');
 
 // ── node-diff3 (server-side three-way merge) ───────────────────────────────────
 // Vendored to public/ for the SW only — server uses the npm package directly.
-cpSync(join(nm, 'node-diff3/index.mjs'), join(vendorDir, 'node-diff3.mjs'));
-console.log('  vendor/node-diff3.mjs');
+try {
+  cpSync(join(nm, 'node-diff3/dist/diff3.mjs'), join(vendorDir, 'node-diff3.mjs'));
+  console.log('  vendor/node-diff3.mjs');
+} catch {
+  console.warn('  vendor/node-diff3.mjs — skipped (not found in node_modules)');
+}
 
 // ── Quill ──────────────────────────────────────────────────────────────────────
 // Quill 2.x ships an unminified UMD bundle as `quill.js` (no `quill.min.js`).

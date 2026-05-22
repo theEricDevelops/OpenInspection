@@ -11,6 +11,7 @@ build/
 .DS_Store
 Thumbs.db
 *.log
+data/
 
 # Temporary and local files
 backups/
@@ -19,6 +20,12 @@ backups/
 .dev.vars*
 test-results/
 .playwright*
+
+# SQLite databases — never commit real data or local dev DBs
+*.db
+*.db*
+data/*.db
+data/*.db*
 
 # Cloudflare config
 wrangler.*.toml

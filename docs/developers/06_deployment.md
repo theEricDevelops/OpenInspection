@@ -1,100 +1,111 @@
 ---
 domain: "Standalone Deployment & Open Source"
-related_code_paths: ["apps/core/", "apps/core/wrangler.toml", "apps/core/.dev.vars.example"]
+related_code_paths: ["src/", "Dockerfile", "docker-compose.yml", "CLAUDE.md"]
 ---
 
-# 04. Standalone Deployment Architecture
+# 06. Standalone Deployment Guide
 
-`apps/core` (published as **OpenInspection**) is a fully self-contained Cloudflare Worker. It has no dependency on `apps/portal` at runtime — the only shared value is `JWT_SECRET`, which standalone users set themselves to sign their own tokens.
+OpenInspection (`apps/core` in the monorepo, published as the `OpenInspection` npm package / Docker image) is a fully self-contained Node.js application. It has no runtime dependency on any SaaS control plane. The only secret that must be shared between instances (if you run multiple) is `JWT_SECRET`.
 
-## Decoupling: Core from SaaS
+## Architecture highlights for self-hosters
 
-- Core never calls portal APIs
-- Core has its own Stripe integration for pay-to-unlock reports; when a tenant has a `stripeConnectAccountId` the checkout routes through their Connect Express account with a 10% platform fee
-- Core has no tenant registration logic (handled by portal or the first-run setup wizard)
-- Subdomain routing in `src/lib/middleware/tenant-router.ts` defaults to `'dev'` in local development.
-- **Apex Mode**: Setting `SINGLE_TENANT_ID` enables single-tenant self-hosting on a primary domain, bypassing subdomain routing entirely.
+- **Single-tenant by default** — set `SINGLE_TENANT_ID` (any UUID) to pin every record to one tenant. Subdomain routing is bypassed.
+- **Multi-tenant ready** — every table has a mandatory `tenant_id`. The `tenant-router` middleware (or `SINGLE_TENANT_ID`) supplies it to the `ScopedDB` layer.
+- **No Workers / D1 / R2 / KV** — SQLite file (`better-sqlite3`) at `DB_PATH`, local filesystem or S3-compatible storage under `STORAGE_DIR`, in-memory or Redis cache.
+- **First-run wizard** — `GET /setup` detects an empty database and guides you through creating the first admin account.
+- **Graceful degradation** — every optional integration (Resend, Gemini, Stripe, Google Calendar, Turnstile, Estated, Google Places) simply disables its feature when the corresponding env var is missing.
 
-## Implemented: Deployment Steps
+## Deployment steps (VM / bare metal / VPS)
 
 ```bash
-# 1. Clone the repo (or apps/core standalone)
-git clone <repo> && cd apps/core
+# 1. Clone
+git clone <your-fork-or-repo> && cd OpenInspection
 
-# 2. Install dependencies
+# 2. Install
 npm install
 
-# 3. Log in to Cloudflare
-npx wrangler login
+# 3. Configure environment (minimum)
+export JWT_SECRET="$(openssl rand -hex 32)"
+export DB_PATH="data/openinspection.db"
+export STORAGE_DIR="data/storage"
+# Recommended for the public booking form
+export TURNSTILE_SECRET_KEY="1x0000000000000000000000000000000AA"
+# Optional services
+export RESEND_API_KEY=...
+export SENDER_EMAIL=...
+export GEMINI_API_KEY=...
+export STRIPE_SECRET_KEY=...
+# ... see CLAUDE.md for the complete table
 
-# 4. Create the D1 database — copy printed database_id into wrangler.toml
-npx wrangler d1 create openinspection-db
+# 4. Initialize the database (creates file + applies 50+ migrations)
+npm run db:reset
 
-# 5. Create the R2 bucket for photos
-npx wrangler r2 bucket create openinspection-photos
+# 5. (Optional) Seed demo data for testing
+npm run db:seed:test
 
-# 6. Apply schema migrations
-npm run db:migrate
-
-# 7. Configure secrets
-cp .dev.vars.example .dev.vars
-# Edit .dev.vars: JWT_SECRET, RESEND_API_KEY, SENDER_EMAIL, GEMINI_API_KEY
-
-# 8. Deploy
-npm run deploy
+# 6. Run
+npm run dev     # hot-reload for development
+# Production:
+npm run build
+npm start       # or use PM2 / systemd
 ```
 
-## Required Secrets
+The server listens on `PORT` (default 8788). Point your reverse proxy at it.
 
-| Secret | Required | Purpose |
-|---|---|---|
-| `JWT_SECRET` | Yes | Signs and verifies JWTs. Use any long random string. |
-| `RESEND_API_KEY` | No | Sends report delivery + booking confirmation emails. Skipped if absent. |
-| `SENDER_EMAIL` | No | From address, e.g. `Reports <reports@yourdomain.com>` |
-| `GEMINI_API_KEY` | No | AI comment assist — disabled if omitted |
-| `STRIPE_SECRET_KEY` | No | Real Stripe checkout on reports. Falls back to mock if absent. |
-| `STRIPE_WEBHOOK_SECRET` | No | Verifies Stripe webhook HMAC signature. |
-| `TURNSTILE_SECRET_KEY` | **Yes** | Server-side Cloudflare Turnstile verification on `POST /api/book`. Booking requests are rejected with 403 if this secret is absent or the token is invalid. Use Cloudflare's test secret (`1x0000000000000000000000000000000AA`) for local dev. |
-| `GOOGLE_CLIENT_ID` | No | Google Calendar OAuth — allows inspectors to sync availability from Google Calendar. |
-| `GOOGLE_CLIENT_SECRET` | No | Google Calendar OAuth client secret. |
-| `CF_ACCOUNT_ID` | No | Cloudflare account ID — required for silo mode (per-tenant isolated D1). |
-| `CF_API_TOKEN` | No | Cloudflare API token with D1:Edit permission — required for silo mode. |
-| `SINGLE_TENANT_ID` | No | Enables **Apex Mode**. Bypass subdomain routing for single-tenant installs. |
-| `APP_NAME` | No | Global site name default. |
-| `GA_MEASUREMENT_ID` | No | Google Analytics 4 Measurement ID. |
+## Docker
 
-`TURNSTILE_SITE_KEY` is a non-secret var — set it in `wrangler.toml` under `[vars]`.
-
-> **Turnstile is required in production.** When `TURNSTILE_SECRET_KEY` is set, `POST /api/book` enforces the token — requests without a valid token are rejected. For local dev, use Cloudflare's always-pass test keys: site key `1x00000000000000000000AA`, secret key `1x0000000000000000000000000000000AA`.
-
-Set for production:
 ```bash
-npx wrangler secret put JWT_SECRET
-npx wrangler secret put RESEND_API_KEY
-npx wrangler secret put SENDER_EMAIL
-npx wrangler secret put GEMINI_API_KEY
-npx wrangler secret put STRIPE_SECRET_KEY
-npx wrangler secret put STRIPE_WEBHOOK_SECRET
-npx wrangler secret put TURNSTILE_SECRET_KEY
-# Optional — Google Calendar integration
-npx wrangler secret put GOOGLE_CLIENT_ID
-npx wrangler secret put GOOGLE_CLIENT_SECRET
-# Optional — silo mode (per-tenant isolated D1)
-npx wrangler secret put CF_ACCOUNT_ID
-npx wrangler secret put CF_API_TOKEN
+# Build and start (uses docker-compose.yml)
+npm run docker:build
+npm run docker:up
+
+# Or the production target
+npm run docker:build:prod
 ```
 
-## Single-Inspector vs Multi-Inspector
+Volumes are mounted under `./data` so your SQLite file and uploaded media survive container restarts. Edit `docker-compose.yml` to inject secrets via environment files or Docker secrets.
 
-Standalone deployments support multiple inspectors via the same `users` table. The admin creates team members via the dashboard. The `requireRole()` RBAC middleware enforces who can create/modify inspections.
+## Required & optional secrets
 
-## Implemented
+| Variable                    | Required | Purpose |
+|-----------------------------|----------|---------|
+| `JWT_SECRET`                | Yes      | HS256 signing key (≥ 32 chars). Never reuse across unrelated deployments. |
+| `DB_PATH`                   | Yes      | Path to the SQLite file (e.g. `data/openinspection.db`). |
+| `STORAGE_DIR`               | Yes      | Directory for local object storage (photos, PDFs, signatures). |
+| `TURNSTILE_SECRET_KEY`      | Recommended | Server-side verification for `POST /api/book`. Use the public test key for local dev. |
+| `RESEND_API_KEY` / `SENDER_EMAIL` | No | Outbound email (report delivery, booking confirmations). |
+| `GEMINI_API_KEY`            | No       | AI-powered comment suggestions. |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | No | Real-money checkout for paid reports (Connect). |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | Google Calendar sync for inspectors. |
+| `SINGLE_TENANT_ID`          | No       | Enables "Apex Mode" — single-tenant self-host on a primary domain. |
+| `APP_NAME`, `PRIMARY_COLOR` | No       | White-label branding overrides. |
+| `SETUP_CODE`                | No       | 6-digit code required on first `/setup` visit (printed in logs when DB is empty). |
 
-| Feature | Status |
-|---|---|
-| "Deploy to Cloudflare Workers" one-click button | Implemented — badge in `apps/core/README.md` |
-| First-run setup wizard (`GET/POST /setup`) | Implemented — auto-redirects on empty DB; SHA-256 password hashing via Web Crypto |
-| Data export (`GET /api/admin/export`) | Implemented — exports inspections, results, templates, agreements as JSON |
+All secrets are read from `process.env`. Use your process manager, a `.env` file (loaded by tsx or your own dotenv), or Docker secrets.
+
+## First-run setup wizard
+
+1. Start the server with an empty database (`npm run db:reset`).
+2. Open `http://localhost:8788/setup` (or your public URL).
+3. Enter the `SETUP_CODE` shown in the server log (or the one you set via env).
+4. Create the first admin user — the account is immediately granted the `owner` role.
+
+Subsequent visits to `/setup` while the database already contains users will return 404 (the route is intentionally disabled).
+
+## Running in production
+
+- Use a process manager (PM2, systemd, or your PaaS) so the Node process restarts on crash.
+- The `start` script (`node --import tsx src/server.ts`) works without a separate compile step, but `npm run build` produces a `dist/` folder if you prefer a pure `node dist/server.js` launch.
+- Schedule any maintenance tasks (report cleanup, etc.) via the same `node-cron` instance or an external cron that hits a private maintenance endpoint.
+- Back up `data/openinspection.db` regularly. Point-in-time recovery is possible by copying the file while the server is stopped or by using SQLite's online backup API.
+
+## Multi-inspector teams
+
+A single standalone deployment happily supports multiple inspectors. The first admin creates additional users from **Settings → Team**. RBAC (`requireRole()`) protects sensitive actions.
+
+## Data export & portability
+
+`GET /api/admin/export` (owner role) produces a complete JSON dump of the tenant's data. This is the recommended way to migrate between hosts or to create a point-in-time archive.
 
 ## Screenshots
 

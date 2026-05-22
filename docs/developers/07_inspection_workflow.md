@@ -10,6 +10,7 @@ related_code_paths: ["apps/core/src/api/inspections.ts", "apps/core/src/api/ai.t
 Inspection forms are not flat database tables. The schema uses two key tables:
 
 ### `templates`
+
 Stores the form structure as a JSON blob in the `schema` column. Each tenant has one or more templates (a default is seeded on registration).
 
 ```json
@@ -35,6 +36,7 @@ Stores the form structure as a JSON blob in the `schema` column. Each tenant has
 There are **no** separate `TemplateSections` or `TemplateItems` tables. The entire nested structure lives in `templates.schema` (JSON column).
 
 ### `inspection_results`
+
 Stores the inspector's field responses as a JSON blob in the `data` column. One row per inspection session.
 
 ```json
@@ -49,7 +51,7 @@ Keys are item IDs from the template. Only items the inspector interacted with ar
 ### Full Schema
 
 | Table | Key Columns | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `templates` | `tenantId`, `name`, `version`, `schema` (JSON) | Form structure definition |
 | `inspections` | `tenantId`, `inspectorId`, `templateId`, `propertyAddress`, `clientEmail`, `status`, `paymentStatus`, `price` | Job record |
 | `inspection_results` | `inspectionId`, `data` (JSON), `lastSyncedAt` | Field data collected |
@@ -69,22 +71,26 @@ The form renderer (`src/templates/pages/form-renderer.template.ts`) uses **Index
 ## 3. Photo Upload Pipeline
 
 Photos are uploaded via:
-```
+
+```plain
 POST /api/inspections/:id/upload
 Content-Type: multipart/form-data
 ```
 
-The Worker receives the file, stores it in R2 under a tenant-scoped key (`{tenantId}/{inspectionId}/{filename}`), and returns the key. Files are retrieved via:
-```
+The server receives the file, stores it in object storage (local FS under `STORAGE_DIR` or S3-compatible) under a tenant-scoped key (`{tenantId}/{inspectionId}/{filename}`), and returns the key. Files are retrieved via:
+
+```plain
 GET /api/inspections/files/:key
 ```
-The retrieval endpoint verifies the key is scoped to the requesting tenant before proxying from R2.
 
-> **Not implemented**: Direct presigned URL uploads (client-to-R2 bypass). All uploads currently pass through the Worker.
+The retrieval endpoint verifies the key is scoped to the requesting tenant before proxying from object storage.
+
+> **Not implemented**: Direct presigned URL uploads (client-to-storage bypass). All uploads currently pass through the server.
 
 ## 4. Report Generation & PDF Export
 
 When an inspection is completed (`POST /api/inspections/:id/complete`):
+
 1. `inspections.status` is set to `'completed'`
 2. Resend email is sent to `clientEmail` with a link to `GET /api/inspections/:id/report`
 3. The report page (`src/templates/pages/report.template.ts`) renders the full inspection as HTML
@@ -92,6 +98,7 @@ When an inspection is completed (`POST /api/inspections/:id/complete`):
 **PDF Export**: The report template includes print stylesheets (`@media print`). Users invoke `window.print()` in the browser to export a formatted PDF. No Puppeteer or third-party PDF service is used.
 
 Report access is gated:
+
 - Agreement must be signed first (`inspection_agreements` record required)
 - Full report requires `paymentStatus === 'paid'` (blurred/locked otherwise)
 
@@ -100,7 +107,7 @@ Report access is gated:
 Templates are managed by admin/owner users. All endpoints require JWT auth.
 
 | Endpoint | Role | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `GET /api/inspections/templates` | Any | List all templates (id, name, version) for tenant |
 | `POST /api/inspections/templates` | admin/owner | Create template — requires `name` + `schema` JSON |
 | `PUT /api/inspections/templates/:id` | admin/owner | Update name/schema, bumps `version` counter |
@@ -111,7 +118,7 @@ Templates are managed by admin/owner users. All endpoints require JWT auth.
 Inspectors manage their own weekly schedule and date-specific overrides. Admins can manage any inspector's schedule via `?inspectorId=` query param.
 
 | Endpoint | Purpose |
-|---|---|
+| --- | --- |
 | `GET /api/availability` | List weekly recurring slots |
 | `PUT /api/availability` | Full replace of weekly schedule; validates `dayOfWeek` (0–6), `startTime`, `endTime` |
 | `GET /api/availability/overrides` | List date-specific overrides |
@@ -121,7 +128,7 @@ Inspectors manage their own weekly schedule and date-specific overrides. Admins 
 ## 6. AI Assistance (apps/core/src/api/ai.ts)
 
 | Endpoint | Input | Output |
-|---|---|---|
+| --- | --- | --- |
 | `POST /api/ai/comment-assist` | `{inspectionId, itemId, rawNote}` | Professional rewrite of the inspector's note |
 | `POST /api/ai/auto-summary` | `{inspectionId}` | Bullet-point summary of all defects |
 
@@ -141,7 +148,7 @@ See [`docs/screenshots.md`](../screenshots.md) for the full UI screenshot index.
 
 ## 8. Execution Flow
 
-```
+```plain
 1. Admin creates inspection (POST /api/inspections/)
    → selects template, assigns inspector, enters address
 
@@ -150,7 +157,7 @@ See [`docs/screenshots.md`](../screenshots.md) for the full UI screenshot index.
    → responses saved to IndexedDB immediately
 
 3. Inspector photographs defects
-   → POST /api/inspections/:id/upload → stored in R2
+   → POST /api/inspections/:id/upload → stored in object storage (local/S3)
 
 4. Background sync pushes IndexedDB data
    → PATCH /api/inspections/:id/results

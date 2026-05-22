@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { InvoiceService } from '../../src/services/invoice.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 
 const TENANT_A = '00000000-0000-0000-0000-000000000001';
@@ -41,10 +41,8 @@ describe('iter-2 #10 — InvoiceService.findByInspectionId', () => {
         const fixture = createTestDb();
         testDb = fixture.db;
         sqlite = fixture.sqlite;
-        await setupSchema(fixture.sqlite);
         await seedBase(testDb);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new InvoiceService({} as any);
+        svc = new InvoiceService(fixture.sqlite);
     });
 
     afterEach(() => {

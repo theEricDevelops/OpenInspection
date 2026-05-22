@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InspectionService } from '../../src/services/inspection.service';
-import { createTestDb, setupSchema } from './db';
+import { ScopedDB } from '../../src/lib/db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -19,12 +20,10 @@ const INSPECTION_ID = '11111111-1111-1111-1111-111111111111';
  *     deletes the underlying object
  *   - tenant isolation — a pool row owned by a different tenant is invisible
  */
-// Skipped: 5 of 7 cases require ScopedDB session wiring; runtime code works
-// in production (sdb is provided via DI middleware), but the unit fixture
-// mocks at the drizzle layer only. Follow-up: add an sdb mock helper.
-describe.skip('InspectionService — Media Center (Round-2 backlog #9)', () => {
+describe('InspectionService — Media Center (Round-2 backlog #9)', () => {
     let svc: InspectionService;
     let testDb: BetterSQLite3Database<typeof schema>;
+    let sdb: ScopedDB;
     const r2Mock = {
         put:    vi.fn().mockResolvedValue(undefined),
         delete: vi.fn().mockResolvedValue(undefined),
@@ -33,10 +32,10 @@ describe.skip('InspectionService — Media Center (Round-2 backlog #9)', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         testDb = fixture.db;
-        await setupSchema(fixture.sqlite);
+        sdb = new ScopedDB(testDb as any, TENANT);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         // Cast r2Mock to the R2Bucket shape we use (put/delete only).
-        svc = new InspectionService({} as any, r2Mock as unknown as import('../../src/lib/storage').ObjectStorage);
+        svc = new InspectionService(fixture.sqlite, r2Mock as unknown as import('../../src/lib/storage').ObjectStorage, sdb);
         r2Mock.put.mockClear();
         r2Mock.delete.mockClear();
 

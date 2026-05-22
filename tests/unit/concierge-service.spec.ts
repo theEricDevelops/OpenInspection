@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { ConciergeService } from '../../src/services/concierge.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import type { EmailService } from '../../src/services/email.service';
@@ -79,14 +79,13 @@ describe('ConciergeService — A3', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         testDb = fixture.db;
-        await setupSchema(fixture.sqlite);
         stubEmail = {
             sendConciergeClientConfirm:    vi.fn().mockResolvedValue(undefined),
             sendConciergeInspectorReview:  vi.fn().mockResolvedValue(undefined),
             sendConciergeConfirmedToAgent: vi.fn().mockResolvedValue(undefined),
             sendConciergeCancelledToAgent: vi.fn().mockResolvedValue(undefined),
         };
-        svc = new ConciergeService({} as any, stubEmail as unknown as EmailService, 'https://acme.example.com');
+        svc = new ConciergeService(fixture.sqlite, stubEmail as unknown as EmailService, 'https://acme.example.com');
     });
 
     describe('createBooking', () => {

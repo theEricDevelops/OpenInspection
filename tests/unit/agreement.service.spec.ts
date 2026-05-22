@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { AgreementService } from '../../src/services/agreement.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -28,9 +28,8 @@ describe('AgreementService', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         testDb = fixture.db;
-        await setupSchema(fixture.sqlite);
         await seedBase(testDb);
-        svc = new AgreementService({} as any);
+        svc = new AgreementService(fixture.sqlite);
     });
 
     it('findOrCreate inserts a new pending agreement_request with token + sent_at', async () => {

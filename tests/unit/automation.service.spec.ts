@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AutomationService } from '../../src/services/automation.service';
 import { AgreementService } from '../../src/services/agreement.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -28,9 +28,8 @@ describe('AutomationService.trigger — agreement filter', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         testDb = fixture.db;
-        await setupSchema(fixture.sqlite);
-        const agr = new AgreementService({} as any);
-        svc = new AutomationService({} as any, undefined, agr);
+        const agr = new AgreementService(fixture.sqlite);
+        svc = new AutomationService(fixture.sqlite, undefined, agr);
         // Stub ensureSeeds so tests verify filter logic without seed-rule pollution.
         // Tests insert their own automation rules below.
         vi.spyOn(svc, 'ensureSeeds').mockResolvedValue();

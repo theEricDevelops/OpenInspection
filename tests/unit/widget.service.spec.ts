@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, } from 'vitest';
 import { WidgetService } from '../../src/services/widget.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import { tenants, tenantConfigs, auditLogs } from '../../src/lib/db/schema';
 import * as schema from '../../src/lib/db/schema';
 import { eq } from 'drizzle-orm';
@@ -15,10 +15,7 @@ describe('WidgetService.isOriginAllowed', () => {
     beforeEach(async () => {
         const setup = createTestDb();
         testDb = setup.db;
-        await setupSchema(setup.sqlite);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new WidgetService({} as any);
+        svc = new WidgetService(setup.sqlite);
 
         await testDb.insert(tenants).values({
             id: TENANT_ID, name: 'T', subdomain: 't', status: 'active',
@@ -46,10 +43,7 @@ describe('WidgetService.isOriginAllowed', () => {
 
     it('returns false when allowlist is empty/null', async () => {
         const setup2 = createTestDb();
-        await setupSchema(setup2.sqlite);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const svc2 = new WidgetService({} as any);
+        const svc2 = new WidgetService(setup2.sqlite);
         const otherTenant = '00000000-0000-0000-0000-000000000002';
         await setup2.db.insert(tenants).values({
             id: otherTenant, name: 'T2', subdomain: 't2', status: 'active',
@@ -75,10 +69,7 @@ describe('WidgetService.isOriginAllowed', () => {
 describe('WidgetService.recordEvent', () => {
     it('writes an audit_logs row with widget.{event} action', async () => {
         const setup = createTestDb();
-        await setupSchema(setup.sqlite);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const svc = new WidgetService({} as any);
+        const svc = new WidgetService(setup.sqlite);
 
         await setup.db.insert(tenants).values({
             id: TENANT_ID, name: 'T', subdomain: 't', status: 'active',

@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeEach, } from 'vitest';
 import { RatingSystemService } from '../../src/services/rating-system.service';
 import { RECOMMENDATION_CATEGORIES, getRecommendationCategory, getRecommendationPhrase } from '../../src/lib/recommendation-categories';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -35,10 +35,9 @@ describe('RatingSystemService — seed + tenant scope', () => {
     beforeEach(async () => {
         const setup = createTestDb();
         testDb = setup.db;
-        await setupSchema(setup.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new RatingSystemService({} as any);
+        svc = new RatingSystemService(setup.sqlite);
         await seedTenants(testDb);
     });
 
@@ -116,6 +115,7 @@ describe('RatingSystemService — seed + tenant scope', () => {
         await svc.seedDefaults(TENANT_A);
         const seed = (await svc.list(TENANT_A)).find(s => s.slug === 'trec')!;
         const a = await svc.clone(seed.id, TENANT_A, 'A');
+        await new Promise(r => setTimeout(r, 5));
         const b = await svc.clone(seed.id, TENANT_A, 'B');
         await svc.update(a.id, TENANT_A, { isDefault: true });
         await svc.update(b.id, TENANT_A, { isDefault: true });

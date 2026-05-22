@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AgentService } from '../../src/services/agent.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import type { EmailService } from '../../src/services/email.service';
@@ -20,7 +20,6 @@ describe('AgentService.listReferrals — A2', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         testDb = fixture.db;
-        await setupSchema(fixture.sqlite);
 
         await testDb.insert(schema.tenants).values([
             { id: T1, name: 'Acme Inspections', subdomain: 'acme', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
@@ -60,7 +59,7 @@ describe('AgentService.listReferrals — A2', () => {
             sendAgentInvite: vi.fn().mockResolvedValue(undefined),
         };
         svc = new AgentService(
-            {} as any,
+            fixture.sqlite,
             stubEmail as unknown as EmailService,
             'https://acme.example.com',
         );
@@ -113,7 +112,6 @@ describe('AgentService.listInspectors — A2', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         testDb = fixture.db;
-        await setupSchema(fixture.sqlite);
 
         await testDb.insert(schema.tenants).values([
             { id: T1, name: 'Acme Inspections', subdomain: 'acme', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
@@ -139,7 +137,7 @@ describe('AgentService.listInspectors — A2', () => {
             sendAgentInvite: vi.fn().mockResolvedValue(undefined),
         };
         svc = new AgentService(
-            {} as any,
+            fixture.sqlite,
             stubEmail as unknown as EmailService,
             'https://acme.example.com',
         );
@@ -193,7 +191,6 @@ describe('AgentService.revokeLink — A2', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         testDb = fixture.db;
-        await setupSchema(fixture.sqlite);
 
         await testDb.insert(schema.tenants).values({
             id: T1, name: 'Acme', subdomain: 'acme', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date(),
@@ -208,7 +205,7 @@ describe('AgentService.revokeLink — A2', () => {
             sendAgentInvite: vi.fn().mockResolvedValue(undefined),
         };
         svc = new AgentService(
-            {} as any,
+            fixture.sqlite,
             stubEmail as unknown as EmailService,
             'https://acme.example.com',
         );
@@ -237,7 +234,6 @@ describe('AgentService.updateProfile — A2', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         testDb = fixture.db;
-        await setupSchema(fixture.sqlite);
 
         await testDb.insert(schema.users).values({
             id: AGENT_USER, tenantId: null, email: 'jane@realty.com', role: 'agent', name: 'Jane', createdAt: new Date(), passwordHash: 'h',
@@ -246,7 +242,7 @@ describe('AgentService.updateProfile — A2', () => {
             sendAgentInvite: vi.fn().mockResolvedValue(undefined),
         };
         svc = new AgentService(
-            {} as any,
+            fixture.sqlite,
             stubEmail as unknown as EmailService,
             'https://acme.example.com',
         );

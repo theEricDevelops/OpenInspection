@@ -1,6 +1,6 @@
 # Testing — apps/core
 
-End-to-end tests use [Playwright](https://playwright.dev/). Tests run against a live local dev server — no mocking, no test database. Hits real Worker endpoints backed by Wrangler's local D1 and R2 emulation.
+End-to-end tests use [Playwright](https://playwright.dev/). Tests run against a live local dev server (Hono + tsx) — no mocking. They hit real API endpoints backed by a dedicated SQLite database (`test-e2e.db`) and local/S3-compatible storage.
 
 ## Quick Start
 
@@ -30,8 +30,8 @@ All 128 tests pass on a **fresh database**. Tests that require known credentials
 **To run the full suite against a fresh database:**
 
 ```bash
-rm -rf .wrangler/state/v3/d1
-npm run db:migrate
+npm run db:reset          # deletes data/openinspection.db* + rebuilds schema
+# (Playwright e2e uses its own test-e2e.db which is cleared automatically by globalSetup)
 npm run dev
 
 # In another terminal:
@@ -83,7 +83,7 @@ npx playwright test
 ### Password Reset Flow
 
 1. `POST /api/auth/forgot-password` — always returns **200** (no email enumeration)
-2. KV-backed one-time token stored with 1-hour TTL
+2. Cache-backed one-time token stored with 1-hour TTL (in-memory or Redis)
 3. `POST /api/auth/reset-password` — validates token, updates password hash, deletes token
 4. Invalid/expired token returns **400**; password under 8 chars returns **400**
 
@@ -98,8 +98,8 @@ npx playwright test
 ### Tenant Tier/Status Sync
 
 1. Portal sends `POST /api/admin/tenant-status` with `Authorization: Bearer {JWT_SECRET}`
-2. Core updates D1 and deletes the `tenant:{subdomain}` KV cache entry
-3. Next request reads fresh tenant record from D1 (no stale cache)
+2. Core updates the tenant record in SQLite and invalidates the in-memory/Redis cache entry
+3. Next request reads fresh tenant record from SQLite (no stale cache)
 4. The `dev` subdomain always bypasses tier enforcement — GET requests remain accessible regardless of status
 
 ### Password Change Flow
@@ -164,7 +164,7 @@ npx playwright test --reporter=html && open playwright-report/index.html
 
 - Dev server must be running before tests.
 - `npm run db:migrate` must run at least once before `npm run dev`.
-- Local D1 state: `.wrangler/state/v3/d1/` — delete to reset.
+- Local SQLite DB for manual dev: `data/openinspection.db*` (use `npm run db:reset` or `npm run db:delete`). E2E tests use `./test-e2e.db` which is cleared automatically.
 - Real API keys (Resend, Stripe, Gemini) are not required. Calls are skipped or use mock fallbacks when keys are absent.
-- **Turnstile is required** — `TURNSTILE_SECRET_KEY` must be set even for local dev and CI. Use Cloudflare's always-pass test secret (`1x0000000000000000000000000000000AA`). If absent, `POST /api/book` throws a 500 error.
-- The Cloudflare Turnstile test keys in `.dev.vars.example` always pass validation — safe for CI.
+- **Turnstile is required** — `TURNSTILE_SECRET_KEY` must be set even for local dev and CI. Use the always-pass test secret (`1x0000000000000000000000000000000AA`). If absent, `POST /api/book` throws a 500 error.
+- The Turnstile test keys in `.env.example` (or your shell env) always pass validation — safe for CI.

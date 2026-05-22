@@ -52,6 +52,7 @@ describe('iter-2 #4 — logout cookie deletion contract', () => {
         // Pin the production behavior by importing the actual helper used by
         // the logout handler. If somebody removes the second deleteCookie
         // call, this test breaks immediately.
+        // Importing auth.ts pulls in drizzle/JWT — needs extra time.
         const auth = await import('../../src/api/auth');
         // The module exports `default` (coreAuthRoutes). We verify that the
         // logout handler is wired by sending a synthetic request through the
@@ -62,12 +63,15 @@ describe('iter-2 #4 — logout cookie deletion contract', () => {
         // effect is skipped, leaving only the cookie clears under test.
         const res = await auth.default.request('/logout', {
             method: 'POST',
-            headers: { 'content-type': 'application/json' },
+            headers: {
+                'content-type': 'application/json',
+                'x-forwarded-proto': 'https',
+            },
         });
         const setCookieHeaders = res.headers.getSetCookie?.() ?? [];
         const inspectorCookie = setCookieHeaders.find(h => h.startsWith('__Host-inspector_token='));
         const csrfCookie = setCookieHeaders.find(h => h.startsWith('__Host-csrf_token='));
         expect(inspectorCookie, 'logout did not clear __Host-inspector_token').toBeDefined();
         expect(csrfCookie, 'logout did not clear __Host-csrf_token').toBeDefined();
-    });
+    }, 30000);
 });

@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { auditLogs, users } from './db/schema/tenant';
 import { logger } from './logger';
 import type { HonoConfig } from '../types/hono';
+import { ExecutionContext } from '../types/portable';
 
 export type AuditAction =
     | 'inspection.create'

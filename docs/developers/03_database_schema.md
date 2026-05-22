@@ -1,51 +1,59 @@
 # Database Schema
 
-The database is Cloudflare D1 (SQLite). The schema is defined in TypeScript using Drizzle ORM and applied via migration files in `migrations/`.
+The database is SQLite, accessed via the `better-sqlite3` Node.js driver (file-based at `DB_PATH` or `:memory:` for tests). The schema is defined in TypeScript using Drizzle ORM. Table definitions live in `src/lib/db/schema/` (one `.ts` file per domain, re-exported from `index.ts`). Migrations are plain SQL files stored in `migrations/`.
 
-## Running Migrations
+## Database Management
 
 ```bash
-# Local dev (applies to the local D1 emulator)
-npm run db:migrate
-
-# Production (requires wrangler auth)
-npx wrangler d1 migrations apply openinspection-db --remote
+npm run db:generate   # Create a new migration after editing src/lib/db/schema/**/*.ts
+npm run db:delete     # Remove the local SQLite DB files (data/openinspection.db*)
+npm run db:build      # Create/repair the DB file by applying all migrations (no data loss on existing DB)
+npm run db:reset      # Full reset: delete DB + db:build (fresh DB with all migrations applied)
 ```
+
+Migrations are applied automatically on `npm run dev` / `npm start` (and in tests) via `src/lib/db/init.ts` (`initDb` / `applyMigrations`). The loader uses Drizzle's official journal (`migrations/meta/_journal.json`) for ordering + a tolerant raw executor so historical migration files continue to work.
+
+`DB_PATH` environment variable (or default `data/openinspection.db`) controls the database file location. See `scripts/db/build.ts` and `scripts/db/delete.ts` for implementation details.
 
 ---
 
 ## Tables
+
+> **Note**: The schema has evolved significantly. The tables below are the original core set with updated notes for the standalone era. Dozens of additional tables now exist (contacts, invoices, marketplace_*, recommendations, automations, qbo_*, esign_*, report_pdfs, notifications, tags, etc.). Always refer to the source files in `src/lib/db/schema/` for the current column definitions, defaults, and relationships. Every table includes `tenant_id` (except global agent accounts in some cases) for isolation.
 
 ### `tenants`
 
 One row per deployed workspace.
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | text (PK) | Random ID |
 | `name` | text | Company display name |
 | `subdomain` | text (unique) | Used for subdomain routing |
 | `tier` | text | `'free'` (default) · `'pro'` · `'enterprise'` |
 | `status` | text | `'pending'` · `'trialing'` · `'active'` (default) · `'past_due'` · `'suspended'` |
-| `stripe_connect_account_id` | text | Stripe Connect Express account ID — routes checkout payments to this account |
-| `created_at` | integer | Unix timestamp |
+| `stripe_connect_account_id` | text | Stripe Connect Express account ID (optional, for payments) |
+| `created_at` | integer (timestamp) | |
 
 ---
 
 ### `users`
 
-Inspectors and admins who log in to the dashboard.
+Inspectors, owners, admins, and (global) agents who log in to the dashboard or booking portal.
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | text (PK) | Random ID |
-| `tenant_id` | text (FK → tenants) | Scopes the user to a workspace |
+| `tenant_id` | text (FK → tenants) | Scopes the user (nullable for global `agent` role accounts that can link to multiple tenants via `agent_tenant_links`) |
 | `email` | text (unique) | Login credential |
-| `password_hash` | text | SHA-256 hex of the plain password |
+| `password_hash` | text | PBKDF2-SHA256 hash (100k iterations, 16-byte salt). Legacy SHA-256 hashes are auto-rehashed on login. |
+| `name`, `phone`, `license_number` | text | Profile fields |
 | `role` | text | `'owner'`, `'admin'`, `'inspector'`, or `'agent'` |
-| `google_refresh_token` | text | Google OAuth refresh token — set after Calendar OAuth flow |
-| `google_calendar_id` | text | Primary Google Calendar ID — used for event creation and sync |
-| `created_at` | integer | Unix timestamp |
+| `slug` | text | Per-tenant unique inspector slug for public booking URLs (`/book/<slug>`) |
+| `google_refresh_token`, `google_calendar_id`, etc. | text | Google Calendar OAuth fields |
+| `totp_*` | various | Optional TOTP 2FA fields (secret, enabled flag, recovery codes) |
+| `notify_on_*` | boolean | Per-user notification preferences |
+| `created_at` | integer (timestamp) | |
 
 ---
 
@@ -54,7 +62,7 @@ Inspectors and admins who log in to the dashboard.
 Defines the checklist structure for inspections. The `schema` column holds a JSON object describing sections, items, and fields.
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | text (PK) | Random ID |
 | `tenant_id` | text (FK → tenants) | |
 | `name` | text | e.g., `'Standard Home Inspection'` |
@@ -63,6 +71,7 @@ Defines the checklist structure for inspections. The `schema` column holds a JSO
 | `created_at` | integer | Unix timestamp |
 
 **Template schema structure:**
+
 ```json
 {
   "sections": [
@@ -89,7 +98,7 @@ Each item has a unique `id` used as the key in `inspection_results.data`.
 One row per inspection job.
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | text (PK) | Random ID |
 | `tenant_id` | text (FK → tenants) | |
 | `inspector_id` | text (FK → users) | Assigned inspector |
@@ -111,13 +120,14 @@ One row per inspection job.
 Stores the field data collected by the inspector. One row per inspection.
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | text (PK) | |
 | `inspection_id` | text (FK → inspections) | |
 | `data` | text (JSON) | Map of item ID → field values |
-| `last_synced_at` | integer | Timestamp of last sync from the mobile form |
+| `last_synced_at` | integer | Timestamp of last update to the result data |
 
 **`data` structure:**
+
 ```json
 {
   "roof_1": {
@@ -132,7 +142,7 @@ Stores the field data collected by the inspector. One row per inspection.
 }
 ```
 
-The field form performs upserts: if a row exists it is updated, otherwise a new row is inserted.
+Inspection result data is stored as a JSON blob keyed by the template item IDs. The web UI performs upserts on this row.
 
 ---
 
@@ -141,7 +151,7 @@ The field form performs upserts: if a row exists it is updated, otherwise a new 
 Inspection service agreement templates. One per tenant (typically).
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | text (PK) | |
 | `tenant_id` | text (FK → tenants) | |
 | `name` | text | e.g., `'Standard Terms'` |
@@ -156,12 +166,12 @@ Inspection service agreement templates. One per tenant (typically).
 Records a client's e-signature on the agreement for a specific inspection.
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | text (PK) | |
 | `inspection_id` | text (FK → inspections) | |
 | `signature_base64` | text | PNG data URI of the signature canvas |
 | `signed_at` | integer | Timestamp |
-| `ip_address` | text | `cf-connecting-ip` header value |
+| `ip_address` | text | Connecting IP address (from request headers) |
 | `user_agent` | text | Browser user agent |
 
 ---
@@ -171,7 +181,7 @@ Records a client's e-signature on the agreement for a specific inspection.
 Recurring weekly availability for each inspector.
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | text (PK) | |
 | `tenant_id` | text (FK → tenants) | |
 | `inspector_id` | text (FK → users) | |
@@ -187,7 +197,7 @@ Recurring weekly availability for each inspector.
 Date-specific overrides that take precedence over recurring availability.
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | text (PK) | |
 | `tenant_id` | text (FK → tenants) | |
 | `inspector_id` | text (FK → users) | |
@@ -201,16 +211,22 @@ Date-specific overrides that take precedence over recurring availability.
 
 ## Migration Files
 
-| File | Tables |
-|---|---|
-| `migrations/0001_auth.sql` | `tenants`, `users` |
-| `migrations/0002_inspections.sql` | `templates`, `inspections`, `inspection_results`, `agreements`, `inspection_agreements`, `availability`, `availability_overrides` |
-| `migrations/0003_agent_crm.sql` | Adds `referred_by_agent_id` to `inspections`, creates index |
-| `migrations/0004_calendar_connect.sql` | Adds `google_refresh_token`, `google_calendar_id` to `users`; adds `stripe_connect_account_id` to `tenants` |
+Migrations are numbered sequentially in `migrations/NNNN_*.sql`. The complete ordered list and hashes are tracked in `migrations/meta/_journal.json` (Drizzle standard).
 
----
+Early foundational migrations established the core tables (`tenants`, `users`, `inspections`, etc.). Later migrations added marketplace, notifications, 2FA, property facts, tags, e-sign audit, QBO sync, and many other features. There are 50+ migrations as of 2026.
+
+When adding a new table or column:
+
+1. Edit the relevant file in `src/lib/db/schema/`.
+2. Run `npm run db:generate`.
+3. Review the generated `migrations/00xx_*.sql` (it will contain `--> statement-breakpoint` markers).
+4. Commit the new `.sql` file + updated `_journal.json` + snapshot.
+
+See `CLAUDE.md` (Database Migrations section) and `src/lib/db/init.ts` for the full workflow and legacy compatibility notes.
 
 ## Indexes
+
+Indexes are defined alongside table schemas in the TypeScript files (Drizzle) and appear in the generated migration SQL. Example from early agent CRM work:
 
 ```sql
 -- 0003_agent_crm.sql
@@ -222,17 +238,27 @@ CREATE INDEX IF NOT EXISTS idx_inspections_agent
 
 ## Drizzle ORM Usage
 
-Schema is defined in `src/lib/db/schema/`. To use in a handler:
+Schema definitions live in `src/lib/db/schema/`. The project provides a convenience wrapper:
 
 ```typescript
-import { drizzle } from 'drizzle-orm/d1';
+import { getDrizzle } from '../lib/db';
 import { inspections } from '../lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-const db = drizzle(c.env.DB);
+const db = getDrizzle();
 const results = await db.select()
     .from(inspections)
     .where(eq(inspections.tenantId, tenantId));
 ```
+
+For most application code, use the `ScopedDB` (injected as `c.get('sdb')` or `this.sdb` in services) which automatically enforces tenant isolation on every query:
+
+```typescript
+// Inside a route handler or service
+const sdb = c.get('sdb'); // or this.sdb
+const row = await sdb.getById(inspections, inspectionId);
+```
+
+See `src/lib/db/scoped.ts` and `src/lib/db/init.ts` for implementation. All new tables must include a `tenantId` column.
 
 All schema is re-exported from `src/lib/db/schema/index.ts` for convenience.

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { UserService } from '../../src/services/user.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -17,8 +17,6 @@ describe('UserService.getProfileBySlug — Sprint C-1', () => {
         const fixture = createTestDb();
         testDb = fixture.db;
         sqlite = fixture.sqlite;
-        await setupSchema(sqlite);
-
         await testDb.insert(schema.tenants).values([
             { id: TENANT, name: 'Acme', subdomain: 'acme', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
         ]);
@@ -41,7 +39,7 @@ describe('UserService.getProfileBySlug — Sprint C-1', () => {
         ]);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new UserService({} as unknown as any);
+        svc = new UserService(sqlite);
     });
 
     afterEach(() => {

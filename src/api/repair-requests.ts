@@ -183,7 +183,7 @@ repairRequestRoutes.openapi(sendEmailRoute, async (c) => {
             recipientEmail: body.recipientEmail,
             hasComments: !!body.customerComments && body.customerComments.length > 0,
         },
-        ipAddress: c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || undefined,
+         ipAddress: c.req.header('x-forwarded-for') || undefined,
         executionCtx: c.executionCtx,
     });
 

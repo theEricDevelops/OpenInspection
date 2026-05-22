@@ -42,4 +42,12 @@ export class MockKV {
   list = vi.fn(async (_options?: any) => {
     return { keys: Array.from(this.store.keys()).map(k => ({ name: k })), list_complete: true };
   });
+
+  handleTenantUpdate = vi.fn(async () => {
+    // Mock implementation for tenant updates
+  });
+
+  handleStripeConnect = vi.fn(async () => {
+    // Mock implementation for Stripe Connect
+  });
 }

@@ -15,6 +15,9 @@ export interface AppEnv {
     KEY_ENCRYPTION_SECRET: string;
     TURNSTILE_SITE_KEY: string;
     TURNSTILE_SECRET_KEY: string;
+    BOT_PROTECTION_SITE_KEY: string;
+    BOT_PROTECTION_SECRET_KEY: string;
+    BOT_PROTECTION_PROVIDER?: string;
     GOOGLE_CLIENT_ID: string;
     GOOGLE_CLIENT_SECRET: string;
     GEMINI_API_KEY: string;

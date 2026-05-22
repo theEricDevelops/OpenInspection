@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, } from 'vitest';
 import { MessageService } from '../../src/services/message.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import { customerMessages, inspections, tenants } from '../../src/lib/db/schema';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
@@ -12,15 +12,12 @@ describe('MessageService', () => {
     beforeEach(async () => {
         const setup = createTestDb();
         testDb = setup.db;
-        await setupSchema(setup.sqlite);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await testDb.insert(tenants).values({ id: 't1', name: 'T', subdomain: 't1', createdAt: new Date() });
         await testDb.insert(inspections).values({
             id: 'i1', tenantId: 't1', propertyAddress: '1 Main', date: '2026-05-01',
             createdAt: new Date(), price: 0,
         });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new MessageService({} as any);
+        svc = new MessageService(setup.sqlite);
     });
 
     it('createMessage inserts a row and returns it', async () => {

@@ -168,7 +168,7 @@ export async function diMiddleware(c: Context<HonoConfig>, next: Next) {
                     target.templateSeed = new TemplateSeedService(c.env.DB);
                     break;
                 case 'reportPdf':
-                    target.reportPdf = new ReportPdfService(c.env.DB, c.env.PDF_RENDERER as any, c.env.REPORTS);
+                        target.reportPdf = new ReportPdfService(c.env.DB, c.env.PDF_RENDERER, c.env.REPORTS);
                     break;
                 case 'templateMigration':
                     target.templateMigration = new TemplateMigrationService(c.env.DB, c.get('tenantId'));

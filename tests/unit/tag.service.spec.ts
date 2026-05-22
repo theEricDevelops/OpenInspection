@@ -12,7 +12,7 @@
  */
 import { describe, it, expect, beforeEach, } from 'vitest';
 import { TagService } from '../../src/services/tag.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -37,10 +37,9 @@ describe('TagService', () => {
     beforeEach(async () => {
         const setup = createTestDb();
         testDb = setup.db;
-        await setupSchema(setup.sqlite);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new TagService({} as any);
+        svc = new TagService(setup.sqlite);
         await seedTenants(testDb);
     });
 

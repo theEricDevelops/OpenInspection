@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { inspections, tenantConfigs, conciergeConfirmTokens } from '../../src/lib/db/schema';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 
 /**
@@ -36,8 +36,6 @@ describe('concierge schema — A3', () => {
 
     it('migration 0058 applies cleanly and the columns/table are queryable', async () => {
         const fixture = createTestDb();
-        await setupSchema(fixture.sqlite);
-
         // Insert a tenant + tenant_config row, then read back the new column default.
         const TENANT = '00000000-0000-0000-0000-000000000a01';
         await fixture.db.insert(schema.tenants).values({

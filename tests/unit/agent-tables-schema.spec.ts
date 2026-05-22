@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { agentTenantLinks, agentInvites } from '../../src/lib/db/schema/tenant';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 
 describe('agent tables schema — A1', () => {
     let sqlite: import('better-sqlite3').Database;
@@ -8,7 +8,6 @@ describe('agent tables schema — A1', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         sqlite = fixture.sqlite;
-        await setupSchema(sqlite);
     });
 
     it('agent_tenant_links Drizzle declaration exposes the spec columns', () => {

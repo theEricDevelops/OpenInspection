@@ -35,7 +35,7 @@ A "seed" template ships in the marketplace and any tenant can import it.
    ```
 
 2. Add the file path to `scripts/seed-marketplace.js` import list.
-3. Run `node scripts/seed-marketplace.js` (local) or `wrangler d1 execute openinspection --file scripts/seed-marketplace.sql` (remote).
+3. Run `node scripts/seed-marketplace.js` (local) or use the SQLite CLI / `npm run db:build` after editing seed data (remote / prod).
 4. Submit a PR. We feature standout templates in the marketplace listing.
 
 ## Add a new payment provider
@@ -43,7 +43,7 @@ A "seed" template ships in the marketplace and any tenant can import it.
 Replace or extend Stripe Connect:
 
 1. Create `src/services/payments/<provider>.service.ts` implementing the `PaymentProvider` interface (in `payments/types.ts`).
-2. Add the provider's API key to `wrangler.toml` env vars and to the env table in `CLAUDE.md`.
+2. Add the provider's API key to your environment (shell, `.env`, or process manager config) and document it in `CLAUDE.md`.
 3. Wire into `src/api/billing.ts` route — provider selected per-tenant via `tenant_settings.paymentProvider`.
 4. Settings UI: extend `src/templates/pages/settings-services.tsx` to add a provider config card.
 
@@ -111,9 +111,9 @@ Each tenant has a `report_theme` setting (Settings → Workspace → Report Them
 
 ## Build a custom PDF output
 
-CF Free tier doesn't allow Browser Rendering, so OpenInspection's report PDF uses browser `window.print()`. To add a server-side PDF (e.g., for TREC REI 7-6 government form):
+The default report PDF uses the browser's `window.print()` (client-side). To add a server-side PDF generator (e.g., for TREC REI 7-6 government form):
 
-1. Use `pdf-lib` (pure JS, ~200 KB) — works in Cloudflare Workers.
+1. Use `pdf-lib` (pure JS, ~200 KB) — works in any Node.js environment.
 2. New endpoint at `src/api/inspections.ts` `GET /api/inspections/:id/pdf?format=trec-rei-7-6`.
 3. Build PDF programmatically via field-by-field placement.
 4. Return `Content-Type: application/pdf` plus a signed URL or inline body.

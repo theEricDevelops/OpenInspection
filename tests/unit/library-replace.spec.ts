@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, } from 'vitest';
 import { eq, and, isNull } from 'drizzle-orm';
 import { MarketplaceService } from '../../src/services/marketplace.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import { marketplaceLibraries, tenantLibraryImports, tenantMarketplaceImportHistory } from '../../src/lib/db/schema/marketplace';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
@@ -9,44 +9,19 @@ import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 const TENANT = '00000000-0000-0000-0000-000000000001';
 const USER = 'user-1';
 
-function buildRawDb(testDb: BetterSQLite3Database<typeof schema>) {
-    // Pulls the underlying better-sqlite3 client from drizzle so we can
-    // surface a D1-style fluent prepare().bind().run() shim that the
-    // chunked-INSERT codepath depends on.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const raw = (testDb as any).$client
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ?? ((testDb as any).session?.client)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ?? ((testDb as any)._.session?.client);
-    return {
-        prepare(sqlStr: string) {
-            return {
-                bind(...params: unknown[]) {
-                    return {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        run: () => (raw as any).prepare(sqlStr).run(...params),
-                    };
-                },
-            };
-        },
-    };
-}
-
 describe('MarketplaceService.updateLibraryImport — replace mode (S2-7)', () => {
     let testDb: BetterSQLite3Database<typeof schema>;
+    let sqlite: ReturnType<typeof createTestDb>['sqlite'];
     let svc: MarketplaceService;
 
     beforeEach(async () => {
         const setup = createTestDb();
         testDb = setup.db;
-        await setupSchema(setup.sqlite);
+        sqlite = setup.sqlite;
         await testDb.insert(schema.tenants).values([
             { id: TENANT, name: 'T', subdomain: 't', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
         ]);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new MarketplaceService(buildRawDb(testDb) as any, TENANT);
+        svc = new MarketplaceService(sqlite, TENANT);
     });
 
     async function seedLibrary(opts: { semver: string; entries: Array<{ text: string; section?: string }> }) {

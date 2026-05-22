@@ -1,107 +1,65 @@
 ---
-domain: "Tenant Routing & KV Cache"
-related_code_paths: ["apps/core/src/lib/middleware/tenant-router.ts", "apps/core/src/index.ts", "apps/core/src/api/admin.ts"]
+domain: "In-Memory / Redis Cache"
+related_code_paths: ["src/lib/cache.ts", "src/lib/middleware/tenant.ts", "src/lib/auth.ts"]
 ---
 
-# KV Cache — Why and How
+# Cache Layer — Why and How
 
-`TENANT_CACHE` is a Cloudflare KV namespace used for two distinct purposes: tenant routing cache and silo database routing. Both avoid repeated D1 queries on the hot path.
+The standalone edition uses a lightweight, pluggable cache (in-memory by default, Redis optional) for two purposes:
 
----
+1. **Password-change invalidation** (`pwchanged:{userId}`) — forces immediate logout of all sessions when a user changes or resets their password.
+2. **One-time tokens** (password reset, email verification) — short-lived signed tokens with server-side TTL.
 
-## Purpose 1 — Tenant Routing Cache (`tenant:{subdomain}`)
-
-### The problem
-
-Every request — page loads, API calls, assets — needs to know which tenant it belongs to. The tenant-router resolves this from the `Host` header subdomain. Without caching that means a D1 query on **every request**:
-
-```
-GET john.inspectorhub.com/api/inspections
-  → SELECT * FROM tenants WHERE subdomain = 'john'  ← D1 round-trip on every call
-```
-
-At scale this is expensive: 10,000 requests/month per tenant × 1,000 tenants = 10M D1 reads consumed purely by routing overhead, before any real query runs.
-
-### What KV provides
-
-- Reads are served from the **nearest Cloudflare edge location** to the user — effectively zero added latency
-- Shared across all Worker instances globally — unlike module-level variables, which reset on cold starts and are not shared between the many parallel instances Cloudflare runs
-- A 5-minute TTL is the right trade-off: tenant data (tier, status) rarely changes mid-session, and when it does (e.g. a Stripe webhook activates or suspends a subscription) the cache is explicitly invalidated
-
-### Cache invalidation
-
-`POST /api/admin/tenant-status` (called by portal after every Stripe event) deletes the KV key immediately:
-
-```typescript
-await c.env.TENANT_CACHE.delete(`tenant:${subdomain}`);
-```
-
-The next request for that subdomain triggers a fresh D1 lookup and repopulates the cache.
-
-### Data stored
-
-```
-Key:   "tenant:john"
-Value: { "id": "uuid", "subdomain": "john", "tier": "pro", "status": "active" }
-TTL:   300 seconds (5 minutes)
-```
-
-Written non-blocking via `c.executionCtx.waitUntil()` so the cache write never adds latency to the response.
+No Cloudflare KV, no global edge distribution, and no per-request tenant lookups are required because the open-source build is **single-tenant** (`SINGLE_TENANT_ID`).
 
 ---
 
-## Purpose 2 — Silo Database Routing (`silo:{tenantId}`)
+## Password-Change Invalidation
 
-### The problem
+When a user changes their password (or an admin resets it), the server writes a marker:
 
-Enterprise tenants with dedicated D1 databases need the worker to know *which* database to use before any query runs. This mapping must be available globally and immediately, without requiring a D1 query (which would be circular — you need to know the DB before you can query it).
-
-### What KV provides
-
-- A fast, globally consistent lookup of `siloDbId` per tenant
-- Written once by `POST /api/admin/silo` (m2m call from portal sysadmin) when a silo is provisioned
-- Read on every request for that tenant by the silo middleware in `src/index.ts`
-- No TTL — silo assignments are permanent
-
-### Data stored
-
-```
-Key:   "silo:550e8400-e29b-41d4-a716-446655440000"
-Value: "d1db-id-abc123"
-TTL:   none (permanent)
+```ts
+await cache.set(`pwchanged:${userId}`, Date.now(), 60 * 60 * 24); // 24 h
 ```
 
-### How silo routing uses it
+On every authenticated request the auth middleware reads this key. If the token's `iat` claim is older than the marker, the request is rejected with 401. This guarantees that a stolen token becomes useless the moment the legitimate owner changes the password.
 
-```typescript
-// src/index.ts — silo middleware
-const siloDbId = await c.env.TENANT_CACHE.get(`silo:${tenantId}`);
-if (siloDbId) {
-    (c.env as any).DB = new D1HttpDatabase(c.env.CF_ACCOUNT_ID, c.env.CF_API_TOKEN, siloDbId);
+- Default: in-memory `Map` (fast, zero-config, sufficient for a single Node process).
+- Optional: Redis-backed implementation for multi-process / multi-host deployments.
+- TTL is intentionally long (24 h) because the marker only needs to outlive the longest-lived JWT.
+
+## One-Time Action Tokens
+
+Password-reset and email-verification flows create a signed JWT that is also recorded in the cache under a random `jti`. The token is valid for 1 hour. On first use the server deletes the `jti` entry, making the token single-use even if the signature is still valid.
+
+```ts
+// creation
+const jti = randomUUID();
+await cache.set(`token:${jti}`, "1", 3600);
+const token = sign({ sub: userId, jti, purpose: "reset" }, JWT_SECRET, "HS256");
+
+// verification
+const payload = verify(token, JWT_SECRET);
+if (await cache.get(`token:${payload.jti}`)) {
+    await cache.delete(`token:${payload.jti}`);
+    // proceed with reset
 }
 ```
 
-All downstream Drizzle queries transparently target the tenant's isolated database without any code changes in route handlers.
+## Configuration
 
----
+| Env Var | Effect |
+| ---------------------- | -------- |
+| (none) | In-memory cache (default, single-process) |
+| `REDIS_URL` | Switches to the Redis adapter automatically |
+| `CACHE_TTL_PWCHANGE` | Override the 24 h TTL for password-change markers |
 
-## Why Not the Alternatives?
+## Why Not the Old Alternatives?
 
-| Alternative | Why it doesn't work |
-|---|---|
-| **D1 on every request** | Adds latency + burns D1 read quota on pure routing overhead |
-| **Module-level `Map` cache** | Resets on cold starts; not shared between the many parallel Worker instances Cloudflare runs simultaneously |
-| **Cache API** | HTTP response caching only — not suitable for arbitrary key-value data |
-| **Durable Objects** | Strong consistency + stateful coordination not needed here; significantly more expensive |
-| **JWT claims only** | JWT carries `tenantId` but not live `tier`/`status` — a suspended tenant could reuse a valid JWT without a server-side status check |
+| Old Idea | Why it was replaced |
+| --------------------------- | --------------------- |
+| Cloudflare KV | Requires Workers runtime; not available in plain Node |
+| Module-level `Map` only | Works for one process; lost on restart or multi-instance deploys |
+| Writing to SQLite on every auth check | Unnecessary write amplification; cache is faster and ephemeral |
 
-The last point is the most important security reason: **tier and status must be verified from a server-side source on every request**, not trusted from the JWT. The JWT is issued at login and may be hours old. KV gives a fresh, low-latency read of live subscription state without paying full D1 query cost on every request.
-
----
-
-## KV Key Summary
-
-| Key pattern | Written by | Read by | TTL |
-|---|---|---|---|
-| `tenant:{subdomain}` | `subdomainRouter` on cache miss | `subdomainRouter` on every request | 300s |
-| `silo:{tenantId}` | `POST /api/admin/silo` (portal m2m) | Silo middleware in `index.ts` | None |
+The current design keeps the security guarantee (password change instantly invalidates tokens) while staying lightweight and self-contained for standalone deployments.

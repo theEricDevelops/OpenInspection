@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { users } from '../../src/lib/db/schema/tenant';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 
 describe('users schema — A1', () => {
     let sqlite: import('better-sqlite3').Database;
@@ -8,7 +8,6 @@ describe('users schema — A1', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         sqlite = fixture.sqlite;
-        await setupSchema(sqlite);
     });
 
     it('users.tenant_id is nullable in Drizzle schema', () => {

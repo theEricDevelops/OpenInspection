@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { UpdateBrandingSchema } from '../../src/lib/validations/admin.schema';
 import { BrandingService } from '../../src/services/branding.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -29,12 +29,12 @@ describe('UpdateBrandingSchema — Round-2 #10 block-report-policy fields', () =
 describe('BrandingService — Round-2 #10 persistence', () => {
     const TENANT = '00000000-0000-0000-0000-000000000099';
     let testDb: BetterSQLite3Database<typeof schema>;
+    let sqlite: ReturnType<typeof createTestDb>['sqlite'];
 
     beforeEach(async () => {
         const fixture = createTestDb();
         testDb = fixture.db;
-        await setupSchema(fixture.sqlite);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        sqlite = fixture.sqlite;
         await testDb.insert(schema.tenants).values({
             id: TENANT,
             name: 'Acme',
@@ -47,7 +47,7 @@ describe('BrandingService — Round-2 #10 persistence', () => {
     });
 
     it('persists blockUnpaid + blockUnsignedAgreement via updateBranding()', async () => {
-        const svc = new BrandingService({} as any);
+        const svc = new BrandingService(sqlite);
 
         await svc.updateBranding(TENANT, {
             blockUnpaid: true,
@@ -64,7 +64,7 @@ describe('BrandingService — Round-2 #10 persistence', () => {
     });
 
     it('toggles both flags back to false on subsequent update', async () => {
-        const svc = new BrandingService({} as any);
+        const svc = new BrandingService(sqlite);
 
         await svc.updateBranding(TENANT, {
             blockUnpaid: true,

@@ -1,0 +1,486 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1779397982008,
+      "tag": "0001_auth",
+      "breakpoints": false,
+      "hash": "856223908c370fb09eda2c63909627b07f5bd9a0b01820d718d4b1b218f93aca"
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1779397983008,
+      "tag": "0002_inspections",
+      "breakpoints": false,
+      "hash": "95ac8ce81f7ce6f48c1963c1dcc16fcc27c2044628b8b24d7c479c7339066704"
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1779397984008,
+      "tag": "0003_agent_crm",
+      "breakpoints": false,
+      "hash": "61d6eb1c5622e48eb06a289f14f28c4e74b3aadebe116819234d14ff416482eb"
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1779397985008,
+      "tag": "0004_calendar_connect",
+      "breakpoints": false,
+      "hash": "154ec2c7f969179354afd597543a360c6e8658b637461e9129fdc228860f00cb"
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1779397986008,
+      "tag": "0005_audit_logs",
+      "breakpoints": false,
+      "hash": "1a9d68f7567ef3d46ad7a41554f9287eba10ef09570bb1c8ebb2c52bf0090da7"
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1779397987008,
+      "tag": "0006_tenant_branding",
+      "breakpoints": false,
+      "hash": "b56a84ad53ce586e0f4e1609a601d685033c073c0836016d8d0ae2fbea734b18"
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1779397988008,
+      "tag": "0007_deployment_mode",
+      "breakpoints": false,
+      "hash": "4dce65e7c06c07d31919197cbdbe449e18b4824389bd7398af721dcb4de02a4b"
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1779397989008,
+      "tag": "0008_role_refactor",
+      "breakpoints": false,
+      "hash": "8c1d08dcd4a52953553605183b6dd2efe9d9fb86a4d3b3ddabee0e1a11b66d04"
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1779397990008,
+      "tag": "0009_settings_secrets",
+      "breakpoints": false,
+      "hash": "1465b2629a3476cb9b58ad72fc907e3699cebbd097490ec8765dcbc06a2ad47f"
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1779397991008,
+      "tag": "0010_user_profile",
+      "breakpoints": false,
+      "hash": "f06281dba62a314c3c363f3b8e419235198ab9ef1e57c24d445d6284e75874a3"
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1779397992008,
+      "tag": "0011_phone",
+      "breakpoints": false,
+      "hash": "a2d174cd250d121ef1554fe9c7f17b16f2170bacfaf12fb59d9e23c0f7efb54f"
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1779397993008,
+      "tag": "0012_comments",
+      "breakpoints": false,
+      "hash": "c08545843ca18d3d1a83706f2bf2163262f0983140b549152e4caea4a7a5cbc1"
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1779397994008,
+      "tag": "0013_contacts",
+      "breakpoints": false,
+      "hash": "8be9b10ae812f9bea738d18217b88e0d14ca46e4d161d6b6f8f253dc4cc7621f"
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1779397995008,
+      "tag": "0014_invoices",
+      "breakpoints": false,
+      "hash": "75fbf4025132a1b8ba67b01de72e67357ec8867c0e5ee74221996acb48f4a725"
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1779397996008,
+      "tag": "0015_agreement_signing",
+      "breakpoints": false,
+      "hash": "77ff437a7747ec6aa2f283ac88c71dcbfa85c03557b508af46e83a843e2f0e16"
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1779397997008,
+      "tag": "0016_parity_schema",
+      "breakpoints": false,
+      "hash": "959e5ef6c170b9d3f8320fc76ce74f08c5f35cdb791ebdfcb6b7355d211664a4"
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1779397998008,
+      "tag": "0017_comments_severity",
+      "breakpoints": false,
+      "hash": "400b90e5860962784899cffe0d9b3cc2bc8ad2e760dff2b400432d86572dcf3f"
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1779397999008,
+      "tag": "0018_marketplace",
+      "breakpoints": false,
+      "hash": "0240746431ad98708f9b42c948100b7a357d0f305c92a0a8df4e4a86eae020d5"
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1779398000008,
+      "tag": "0019_google_calendar_ics",
+      "breakpoints": false,
+      "hash": "638599a0bc24290b68f243f93f136d77a29b5b0a2f6519e03f806316c49c6f19"
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1779398001008,
+      "tag": "0020_phase_t",
+      "breakpoints": false,
+      "hash": "c5726164a2b9144a845460e86346ee9d9d2514b6ac9852fdafcc47a42526acb8"
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1779398002008,
+      "tag": "0021_phase_t_fixes",
+      "breakpoints": false,
+      "hash": "954d6823df4f7c51f1710c9aba9fc9954d3890ca728bf20970696f89c3034418"
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1779398003008,
+      "tag": "0022_widget_origins",
+      "breakpoints": false,
+      "hash": "b641dd53051d9407030d648bd1ddbd6483d243a8ed30406d061e671a3e474dcb"
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1779398004008,
+      "tag": "0023_notifications",
+      "breakpoints": false,
+      "hash": "864c47d0a891abc06cdb94045539110ace6a4a36d0ab1b797793071603df34e4"
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1779398005008,
+      "tag": "0024_fix_comments_created_at",
+      "breakpoints": false,
+      "hash": "26427cbea6002a8e0de1e2b7be640925f7d786c0fd128fb28441c1d436d1e382"
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1779398006008,
+      "tag": "0025_inspection_template_snapshot",
+      "breakpoints": false,
+      "hash": "211f21b91ffcc933bced16020a327c789e16623a3cdb1cf9e10c6b842bbe2674"
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1779398007008,
+      "tag": "0026_recommendations",
+      "breakpoints": false,
+      "hash": "4bab5e7625235e4a2f3caf55c139a06546d9a75a5694c4c011fc2edfc6b31923"
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1779398008008,
+      "tag": "0027_agreement_state_machine",
+      "breakpoints": false,
+      "hash": "25c186c1990e8e397ef14e27ed3c6c5a0141986b67962c8148f3de37d8fb0893"
+    },
+    {
+      "idx": 27,
+      "version": "6",
+      "when": 1779398009008,
+      "tag": "0028_automations_trigger_check",
+      "breakpoints": false,
+      "hash": "6c77bbf75fa04b06fa30ebaea9e432dc008f1d3350cdc9c03143afd13f481b58"
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1779398010008,
+      "tag": "0029_spec3a_cancel_notes",
+      "breakpoints": false,
+      "hash": "16af5f384003b89404bb77a1e4e8ecf3dbd47c1eb359bae5fff2b3858db3d61b"
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1779398011008,
+      "tag": "0030_2fa_columns",
+      "breakpoints": false,
+      "hash": "59b8cb6ab236dd18898e143ffb8618efeab0854020da76f289d86091f4fdc6f6"
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1779398012008,
+      "tag": "0031_report_themes",
+      "breakpoints": false,
+      "hash": "b96debed5be035ed62587833298afe7f01fb8d75c8fc3b6057671aabea20c97c"
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1779398013008,
+      "tag": "0032_inspection_events",
+      "breakpoints": false,
+      "hash": "8d0d26be20168801db97c3a4e8f97c891a4ed5bae5a515ed063b27577cbb91d7"
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1779398014008,
+      "tag": "0033_marketplace_featured",
+      "breakpoints": false,
+      "hash": "468f77fda92b82d8423420de1e0f87ac8a51ccb86163d26f691e61e741b7ff94"
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1779398015008,
+      "tag": "0034_event_gcal_id",
+      "breakpoints": false,
+      "hash": "285db925af5f36614bea32b01181beec8178d984760e14c8992236894dd68a1f"
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1779398016008,
+      "tag": "0035_report_pdfs",
+      "breakpoints": false,
+      "hash": "b2b3d9c0c25d7d82c1bebd14257b373361f7105b65fea77bc242272a9ab9eef1"
+    },
+    {
+      "idx": 35,
+      "version": "6",
+      "when": 1779398017008,
+      "tag": "0036_geocoded_address",
+      "breakpoints": false,
+      "hash": "afc89ed5535eb0180e169e81ce6e6e3c799bbb79e7245c22bf3d68c68e8a3c68"
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1779398018008,
+      "tag": "0037_esign_audit",
+      "breakpoints": false,
+      "hash": "d844466a8de8e131844f545fe947c0490cafde0832ae837ad45e06ef78b300d0"
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1779398019008,
+      "tag": "0038_marketplace_libraries",
+      "breakpoints": false,
+      "hash": "66efbdb5f3b4821962be75eceeb08198726036abcaf04b93b8a10ca0ca7e61a7"
+    },
+    {
+      "idx": 38,
+      "version": "6",
+      "when": 1779398020008,
+      "tag": "0039_comments_rating_bucket",
+      "breakpoints": false,
+      "hash": "adf56b17ef4dbec40eb365fa2ca1da8ddacc83b89d682d3fc8c9badb188f4d29"
+    },
+    {
+      "idx": 39,
+      "version": "6",
+      "when": 1779398021008,
+      "tag": "0040_attention_thresholds",
+      "breakpoints": false,
+      "hash": "1bcf6b187e348b38e8f509112c21977d0a5e1da134a5c4c2db342c44388c0521"
+    },
+    {
+      "idx": 40,
+      "version": "6",
+      "when": 1779398022008,
+      "tag": "0041_inspection_requests",
+      "breakpoints": false,
+      "hash": "9b41e143337cb1be37f51f1867c9f3473c65775474cbc5f27e615ea926219a66"
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1779398023008,
+      "tag": "0041_sprint2_schema",
+      "breakpoints": false,
+      "hash": "45600c049fdf26debc912d1b9e8e4b0dae25c94f55e6e182f3ff639039968bff"
+    },
+    {
+      "idx": 42,
+      "version": "6",
+      "when": 1779398024008,
+      "tag": "0043_marketplace_history",
+      "breakpoints": false,
+      "hash": "5d8131af473514173243f4e15c49f5a74d52c63a05698c59dae1b212bbb2c7b2"
+    },
+    {
+      "idx": 43,
+      "version": "6",
+      "when": 1779398025008,
+      "tag": "0044_repair_list_toggle",
+      "breakpoints": false,
+      "hash": "4047c3ca9469fd8b645cda36ab490cb47a6a7a9442dbde2a1db47a9827e7ee4b"
+    },
+    {
+      "idx": 44,
+      "version": "6",
+      "when": 1779398026008,
+      "tag": "0045_property_facts",
+      "breakpoints": false,
+      "hash": "93ea9bc47210f1122578a2f43945ca3f63f784e8dd04e7eb94022287ee138c3d"
+    },
+    {
+      "idx": 45,
+      "version": "6",
+      "when": 1779398027008,
+      "tag": "0046_dashboard_column_prefs",
+      "breakpoints": false,
+      "hash": "3ffa94c3a1ead3363ba79ec06818833a05a262b7e566ffddc76a831d3b58eb38"
+    },
+    {
+      "idx": 46,
+      "version": "6",
+      "when": 1779398028008,
+      "tag": "0047_media_pool",
+      "breakpoints": false,
+      "hash": "f99a8d566ca66b9aad39f863678a4df4e477d06bc5dbb941450ac04bfd992c39"
+    },
+    {
+      "idx": 47,
+      "version": "6",
+      "when": 1779398029008,
+      "tag": "0048_block_report_policy",
+      "breakpoints": false,
+      "hash": "84d4b98370b5ad8477bae7bb33bbf977383f5dbc98ec64a1b196c6118d5471d8"
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1779398030008,
+      "tag": "0049_tags",
+      "breakpoints": false,
+      "hash": "7fc7d470dd5af56318d3ca0050291159adff75e7a6afa801a493399fc153aff8"
+    },
+    {
+      "idx": 49,
+      "version": "6",
+      "when": 1779398031008,
+      "tag": "0051_customer_repair_export",
+      "breakpoints": false,
+      "hash": "a883dabf77f5a7d325a6e63b8b22b2412349d6c90ca19eed5d946151dd2af2d3"
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1779398032008,
+      "tag": "0052_inspector_slug",
+      "breakpoints": false,
+      "hash": "d09c576e551450c641e3f8f01147cedad50662f0ee82828582bfa1a27a367f4f"
+    },
+    {
+      "idx": 51,
+      "version": "6",
+      "when": 1779398033008,
+      "tag": "0053_audit_inspector_slug",
+      "breakpoints": false,
+      "hash": "df0f51e1b3eb9be286e425bfef33cdfe7acdf9d30c14a2e72ac5237f045a503e"
+    },
+    {
+      "idx": 52,
+      "version": "6",
+      "when": 1779398034008,
+      "tag": "0054_inspector_profile",
+      "breakpoints": false,
+      "hash": "ed293a145f9c08917374eb2985bab8f9a5c066041cdab993f89be95d563a8518"
+    },
+    {
+      "idx": 53,
+      "version": "6",
+      "when": 1779398035008,
+      "tag": "0055_users_tenant_nullable",
+      "breakpoints": false,
+      "hash": "46ddd701aa996f72ef1c511a0ced639920f2329f8994b682996523bd12d06e1b"
+    },
+    {
+      "idx": 54,
+      "version": "6",
+      "when": 1779398036008,
+      "tag": "0056_agent_links_invites",
+      "breakpoints": false,
+      "hash": "29179206d4a22ac1376ee5ddf3ea78afb37e5d8754a0feb1da689cd71eef21e5"
+    },
+    {
+      "idx": 55,
+      "version": "6",
+      "when": 1779398037008,
+      "tag": "0057_agent_notification_prefs",
+      "breakpoints": false,
+      "hash": "aed8cd67cdcb2fdbd52b7744d5dc3461d8d44993bc39979f200d21bb6a8e82b3"
+    },
+    {
+      "idx": 56,
+      "version": "6",
+      "when": 1779398038008,
+      "tag": "0058_concierge",
+      "breakpoints": false,
+      "hash": "ad0ccee70e51a15ad52a7a7456a94ae4a24f887915cb5fb0397d58f5d413c7fa"
+    },
+    {
+      "idx": 57,
+      "version": "6",
+      "when": 1779398039008,
+      "tag": "0059_pdf_pipeline_toggle",
+      "breakpoints": false,
+      "hash": "89f2f8c910d6f4ee01a059dc841e23c6b791fac259f86875d9315f4fbde3bacf"
+    },
+    {
+      "idx": 58,
+      "version": "6",
+      "when": 1779398040008,
+      "tag": "0060_qbo",
+      "breakpoints": false,
+      "hash": "a9e007236c837c4d06ebcd61d9e2f2e55eaaed0788260103b7fad5601867a08d"
+    },
+    {
+      "idx": 59,
+      "version": "6",
+      "when": 1779398041008,
+      "tag": "0061_invoice_contact_id",
+      "breakpoints": false,
+      "hash": "e71eb7522e0dc5a2f6917cc4cca13ed9c9279c48d06a308e74a1cbb13832fbc4"
+    }
+  ]
+}

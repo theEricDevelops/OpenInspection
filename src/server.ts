@@ -1,49 +1,22 @@
 import 'dotenv/config';
 import { serve } from '@hono/node-server';
-import { DatabaseConstructor } from './types/db';
-import type { SqliteDb } from './types/db';
 import { app } from './index';
-import { readdirSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { existsSync, mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { LocalStorage } from './lib/storage';
 import { MemoryCache } from './lib/cache';
 import { PuppeteerPdfRenderer } from './lib/pdf-puppeteer';
 import cron from 'node-cron';
+import { logger } from './lib/logger';
+import type { ExecutionContext, ScheduledEvent } from './types/portable';
+import type { AppEnv } from './types/hono';
+import { initDb } from './lib/db';
 
 const PORT = parseInt(process.env.PORT || '8788', 10);
 const DB_PATH = process.env.DB_PATH || resolve(process.cwd(), 'data/openinspection.db');
 const STORAGE_DIR = process.env.STORAGE_DIR || resolve(process.cwd(), 'data/storage');
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
-function initDatabase(): SqliteDb {
-    const dbDir = resolve(dirname(DB_PATH));
-    if (!existsSync(dbDir)) {
-        mkdirSync(dbDir, { recursive: true });
-    }
-    const sqlite = new DatabaseConstructor(DB_PATH);
-    sqlite.pragma('journal_mode = WAL');
-    sqlite.exec(`CREATE TABLE IF NOT EXISTS _migrations (
-        name TEXT PRIMARY KEY,
-        applied_at TEXT NOT NULL DEFAULT (datetime('now'))
-    )`);
-    const migrationsDir = resolve(__dirname, '../migrations');
-    if (existsSync(migrationsDir)) {
-        const files = readdirSync(migrationsDir).sort();
-        for (const file of files) {
-            if (file.endsWith('.sql')) {
-                const already = sqlite.prepare('SELECT 1 FROM _migrations WHERE name = ?').get(file);
-                if (already) continue;
-                const migration = readFileSync(resolve(migrationsDir, file), 'utf8');
-                sqlite.exec(migration);
-                sqlite.prepare('INSERT INTO _migrations (name) VALUES (?)').run(file);
-            }
-        }
-    }
-    return sqlite;
-}
-
-const db = initDatabase();
+const db = initDb(DB_PATH);
 if (!existsSync(STORAGE_DIR)) {
     mkdirSync(STORAGE_DIR, { recursive: true });
 }
@@ -59,10 +32,11 @@ const env = {
     PDF_RENDERER: process.env.PUPPETEER_ENABLED === 'true' ? new PuppeteerPdfRenderer() : undefined,
 } as Record<string, unknown>;
 
-const executionCtx = {
+const executionCtx: ExecutionContext = {
     waitUntil: (_promise: Promise<unknown>) => { /* no-op */ },
     passThroughOnException: () => { /* no-op */ },
-} as any;
+    props: {},
+};
 
 serve(
     {
@@ -70,19 +44,19 @@ serve(
         port: PORT,
     },
     (info) => {
-        console.log(`OpenInspection server running on http://localhost:${info.port}`);
+        logger.info(`OpenInspection server running on http://localhost:${info.port}`);
 
         // Phase 4d — Portable cron jobs using node-cron
         // QBO CDC sync (hourly)
         cron.schedule('0 * * * *', async () => {
             try {
                 const { scheduled } = await import('./scheduled');
-                await scheduled({} as any, env as any, {} as any);
+                await scheduled({} as ScheduledEvent, env as unknown as AppEnv, executionCtx);
             } catch (e) {
-                console.error('[cron] scheduled job failed', e);
+                logger.error('[cron] scheduled job failed', {}, e instanceof Error ? e : new Error(String(e)));
             }
         });
 
-        console.log('[cron] Scheduled jobs initialized (node-cron)');
+        logger.info('[cron] Scheduled jobs initialized (node-cron)');
     },
 );

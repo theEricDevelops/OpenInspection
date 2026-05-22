@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
  * POST /setup always returns 200 (fresh workspace) and every test
  * that requires a real token runs instead of being skipped.
  *
- * Uses better-sqlite3 directly (portable, no wrangler dependency).
+ * Uses better-sqlite3 directly.
  */
 export default function globalSetup() {
     const appDir = path.resolve(__dirname, '..');

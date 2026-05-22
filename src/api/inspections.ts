@@ -843,7 +843,6 @@ const aggregateRecommendationsRoute = createRoute({
 inspectionsRoutes.openapi(aggregateRecommendationsRoute, async (c) => {
     const { id } = c.req.valid('param');
     const tenantId = c.get('tenantId') as string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = drizzle(c.env.DB);
     const row = await db.select().from(inspectionResults)
         .where(and(eq(inspectionResults.inspectionId, id), eq(inspectionResults.tenantId, tenantId))).get();
@@ -1415,7 +1414,7 @@ inspectionsRoutes.openapi(completeInspectionRoute, async (c) => {
         // never block inspection completion on an optional dependency.
         const deliver = async () => {
             try {
-                const pdf = await generatePdfFromUrl(c.env.PDF_RENDERER as any, reportUrl);
+                const pdf = await generatePdfFromUrl(c.env.PDF_RENDERER, reportUrl);
                 await c.var.services.email.sendInspectionReportPdf(clientEmail, address, reportUrl, pdf, sigInspector, sigHost);
             } catch (err) {
                 logger.error('[complete] PDF generation failed, falling back to text-only email',
@@ -1496,7 +1495,7 @@ inspectionsRoutes.openapi(sendReportPdfRoute, async (c) => {
     const sigHost = getBookingHost(c);
 
     try {
-        const pdf = await generatePdfFromUrl(c.env.PDF_RENDERER as any, reportUrl);
+        const pdf = await generatePdfFromUrl(c.env.PDF_RENDERER, reportUrl);
         await c.var.services.email.sendInspectionReportPdf(recipient, address, reportUrl, pdf, sigInspector, sigHost);
         auditFromContext(c, 'inspection.send_pdf', 'inspection', { entityId: id, metadata: { recipient } });
         return c.json({ success: true as const, data: { sentTo: recipient } }, 200);

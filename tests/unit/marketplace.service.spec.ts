@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { MarketplaceService } from '../../src/services/marketplace.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import { marketplaceTemplates, tenantMarketplaceImports, marketplaceLibraries, tenantLibraryImports } from '../../src/lib/db/schema/marketplace';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
@@ -9,19 +9,18 @@ import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 const TENANT = '00000000-0000-0000-0000-000000000001';
 
 describe('MarketplaceService.importTemplate (Spec 1 fix verification)', () => {
+    let sqlite: ReturnType<typeof createTestDb>['sqlite'];
     let testDb: BetterSQLite3Database<typeof schema>;
     let svc: MarketplaceService;
 
     beforeEach(async () => {
         const setup = createTestDb();
         testDb = setup.db;
-        await setupSchema(setup.sqlite);
+        sqlite = setup.sqlite;
         await testDb.insert(schema.tenants).values([
             { id: TENANT, name: 'T', subdomain: 't', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
         ]);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new MarketplaceService({} as any, TENANT);
+        svc = new MarketplaceService(setup.sqlite, TENANT);
     });
 
     it('Spec 5B P3 — rejects v1 marketplace templates with a clear error', async () => {
@@ -180,30 +179,7 @@ describe('MarketplaceService.importTemplate (Spec 1 fix verification)', () => {
     });
 
     it('Round 37 — updateLibraryImport: appends new rows + repoints import marker', async () => {
-        // The library update path runs raw SQL via rawDb.prepare(...).bind(...).run()
-        // (chunked INSERT). Wire rawDb to better-sqlite3 with a thin shim so the
-        // D1-style fluent .bind().run() works under test.
-        const sqliteDb = (testDb as unknown as { $client?: { prepare: (sql: string) => { run: (...p: unknown[]) => unknown } } }).$client
-            ?? null;
-        // Fallback — fish out the raw better-sqlite3 instance via testDb internals
-        // exposed by drizzle's BetterSQLite3Database class.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const raw = sqliteDb ?? ((testDb as any).session?.client) ?? ((testDb as any)._.session?.client);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const rawDb: any = {
-            prepare(sql: string) {
-                return {
-                    bind(...params: unknown[]) {
-                        return {
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            run: () => (raw as any).prepare(sql).run(...params),
-                        };
-                    },
-                };
-            },
-        };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const svcWithRaw = new MarketplaceService(rawDb, TENANT);
+        const svcWithRaw = new MarketplaceService(sqlite, TENANT);
 
         const libraryId = crypto.randomUUID();
         const now = new Date().toISOString();

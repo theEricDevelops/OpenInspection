@@ -1,5 +1,6 @@
 import { createReadStream, existsSync, mkdirSync, readdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
+import type { S3ClientConfig } from '@aws-sdk/client-s3';
 
 export interface StorageObject {
     body: ReadableStream;
@@ -144,10 +145,10 @@ export class S3Storage implements ObjectStorage {
     private async client(): Promise<import('@aws-sdk/client-s3').S3Client> {
         if (!this.s3Client) {
             const { S3Client } = await import('@aws-sdk/client-s3');
-            const config: Record<string, unknown> = { region: this.region };
+            const config: S3ClientConfig = { region: this.region };
             if (this.endpoint) config.endpoint = this.endpoint;
             if (this.credentials) config.credentials = this.credentials;
-            this.s3Client = new S3Client(config as any);
+            this.s3Client = new S3Client(config);
         }
         return this.s3Client as import('@aws-sdk/client-s3').S3Client;
     }
@@ -212,7 +213,7 @@ export class S3Storage implements ObjectStorage {
             ContinuationToken: options?.cursor,
         }));
         return {
-            objects: (result.Contents ?? []).map((o: any) => ({
+            objects: (result.Contents ?? []).map((o) => ({
                 key: o.Key ?? '',
                 uploaded: o.LastModified ?? new Date(0),
                 size: o.Size ?? 0,

@@ -4,7 +4,6 @@ import { eq, and, gte, lte, sql } from 'drizzle-orm';
 import { availability, availabilityOverrides, inspections, users } from '../lib/db/schema';
 import { Errors } from '../lib/errors';
 import { safeISODate } from '../lib/date';
-import { logger } from '../lib/logger';
 
 /**
  * Service to handle public booking flow and availability lookups.
@@ -118,25 +117,15 @@ export class BookingService {
 
     /**
      * Internal helper to verify bot protection.
-     * Supports Turnstile (default), reCAPTCHA, and hCaptcha via verifyUrl.
+     * Reuses the centralized verifyBotProtection from the bot-protection middleware.
      */
     async verifyBotProtection(
         token: string,
         secret: string,
         verifyUrl = 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
     ) {
-        try {
-            const res = await fetch(verifyUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ secret, response: token }),
-            });
-            const data = await res.json() as { success: boolean };
-            return data.success;
-        } catch (e) {
-            logger.error('[bot-protection] verification failed', {}, e instanceof Error ? e : undefined);
-            return false;
-        }
+        const { verifyBotProtection: verify } = await import('../lib/middleware/bot-protection');
+        return verify(token, secret, verifyUrl);
     }
 }
 

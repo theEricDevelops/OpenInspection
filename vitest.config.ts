@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    pool: 'forks',
     globals: true,
     environment: 'node',
     // Per-file environment overrides: add `// @vitest-environment happy-dom`

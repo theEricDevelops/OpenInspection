@@ -279,7 +279,7 @@ test.describe.serial('Integration: Google Calendar', () => {
         const clientSecret = env.GOOGLE_CLIENT_SECRET;
         test.skip(!refreshToken || !clientId || !clientSecret, 'Google Calendar sandbox credentials not configured — set INTEGRATION_GOOGLE_REFRESH_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET in .dev.vars');
 
-        // Seed the google_refresh_token for the test user via wrangler SQL
+        // Seed the google_refresh_token for the test user
         const seedSql = `UPDATE users SET google_refresh_token = '${refreshToken}', google_calendar_id = 'primary' WHERE id = '${userId}';`;
         const seedFile = resolve(os.tmpdir(), 'seed-google-token.sql');
         writeFileSync(seedFile, seedSql, 'utf8');

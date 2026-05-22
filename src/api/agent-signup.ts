@@ -22,6 +22,7 @@ const SignupBodySchema = z
         email: z.string().email(),
         password: z.string().min(12).max(120),
         name: z.string().min(2).max(120),
+        botProtectionToken: z.string().optional(),
         turnstileToken: z.string().optional(),
     })
     .openapi('AgentSignupBody');
@@ -60,19 +61,21 @@ const signupRoute = createRoute({
 agentSignupRoutes.openapi(signupRoute, async (c) => {
     const body = c.req.valid('json');
 
-    // Bot protection — only enforced when TURNSTILE_SECRET_KEY is configured.
+    // Bot protection — only enforced when BOT_PROTECTION_SECRET_KEY is configured.
     // Local dev / open-source operators can ship without it; production gets
     // automatic enforcement when the secret is set.
-    if (c.env.TURNSTILE_SECRET_KEY) {
-        if (!body.turnstileToken) {
+    const botSecret = c.env.BOT_PROTECTION_SECRET_KEY || c.env.TURNSTILE_SECRET_KEY;
+    if (botSecret) {
+        const token = body.botProtectionToken || body.turnstileToken;
+        if (!token) {
             throw Errors.BadRequest('Bot challenge required');
         }
         let ok = false;
         try {
             const verifyUrl = c.env.BOT_PROTECTION_VERIFY_URL as string | undefined;
-            ok = await verifyTurnstile(body.turnstileToken, c.env.TURNSTILE_SECRET_KEY, verifyUrl);
+            ok = await verifyTurnstile(token, botSecret, verifyUrl);
         } catch (err) {
-            logger.warn('agent.signup.turnstile.failed', {
+            logger.warn('agent.signup.bot.failed', {
                 error: err instanceof Error ? err.message : String(err),
             });
             ok = false;

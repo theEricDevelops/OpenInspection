@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, } from 'vitest';
 import { eq, and } from 'drizzle-orm';
 import { TemplateMigrationService } from '../../src/services/template-migration.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import { tenantMarketplaceImportHistory } from '../../src/lib/db/schema/marketplace';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
@@ -70,14 +70,13 @@ describe('TemplateMigrationService', () => {
     beforeEach(async () => {
         const setup = createTestDb();
         testDb = setup.db;
-        await setupSchema(setup.sqlite);
         await testDb.insert(schema.tenants).values([
             { id: TENANT, name: 'T', subdomain: 't', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
             { id: OTHER_TENANT, name: 'O', subdomain: 'o', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
         ]);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new TemplateMigrationService({} as any, TENANT);
+        svc = new TemplateMigrationService(setup.sqlite, TENANT);
     });
 
     describe('preview()', () => {

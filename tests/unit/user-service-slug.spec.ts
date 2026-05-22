@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { UserService } from '../../src/services/user.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -18,15 +18,13 @@ describe('UserService — slug', () => {
         const fixture = createTestDb();
         testDb = fixture.db;
         sqlite = fixture.sqlite;
-        await setupSchema(sqlite);
-
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await testDb.insert(schema.tenants).values([
             { id: TENANT, name: 'Acme', subdomain: 'acme', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
             { id: OTHER_TENANT, name: 'Other', subdomain: 'other', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
         ]);
 
-        svc = new UserService({} as unknown as any);
+        svc = new UserService(sqlite);
     });
 
     afterEach(() => {

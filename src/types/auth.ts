@@ -31,7 +31,7 @@ export interface BrandingConfig {
     bookingHost?: string | undefined;
 }
 
-import { ScopedDB } from '../lib/db/scoped';
+import { ScopedDB } from '../lib/db';
 
 export interface AuthVariables {
     tenantId: string;

@@ -1,0 +1,51 @@
+# Docker Compose configuration for OpenInspection
+#
+# Build commands (images are automatically tagged):
+#   docker compose build test     →  openinspection:test   (pre-seeded admin + templates)
+#   docker compose build prod     →  openinspection:prod   (clean production)
+#   docker compose build          →  builds app + prod + test
+#
+# Run commands:
+#   docker compose up -d          →  starts production (openinspection:prod)
+#   docker compose up test -d     →  starts the seeded test image
+#
+# The `app` service is the default for `docker compose up`.
+# The `prod` service exists so `docker compose build prod` works explicitly.
+# The `test` service produces the batteries-included image for demos/CI.
+
+services:
+  # Default production deployment (backward-compatible with `docker compose up`)
+  app:
+    build:
+      context: .
+      target: prod
+    image: openinspection:prod
+    ports:
+      - "8788:8788"
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+    restart: always
+
+  # Explicit production target (for `docker compose build prod`)
+  prod:
+    build:
+      context: .
+      target: prod
+    image: openinspection:prod
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+
+  # Pre-seeded test / demo / CI target (for `docker compose build test`)
+  test:
+    build:
+      context: .
+      target: test
+    image: openinspection:test
+    ports:
+      - "8788:8788"
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+

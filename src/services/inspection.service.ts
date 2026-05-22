@@ -8,7 +8,7 @@ import { computeReportStats, getRatingColor, getRatingBucket, type RatingLevel }
 import { z } from 'zod';
 import { InspectionSchema, InspectionListQuerySchema, CreateInspectionSchema } from '../lib/validations/inspection.schema';
 
-import { ScopedDB } from '../lib/db/scoped';
+import { ScopedDB } from '../lib/db';
 import { safeISODate, safeTimestamp } from '../lib/date';
 import { AutomationService } from './automation.service';
 import { logger } from '../lib/logger';

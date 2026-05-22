@@ -685,8 +685,8 @@ app.get('/confirm/:token', async (c) => {
 app.get('/agent-signup', (c) => {
     const branding = c.get('branding');
     return c.html(AgentSignupPage({
-        ...(c.env.TURNSTILE_SITE_KEY ? { siteKey: c.env.TURNSTILE_SITE_KEY } : {}),
-        ...(branding ? { branding } : {}),
+        siteKey: c.env.TURNSTILE_SITE_KEY || c.env.BOT_PROTECTION_SITE_KEY,
+        branding,
     }));
 });
 
@@ -747,7 +747,7 @@ app.get('/embed/book/:slug', async (c) => {
         inspectorId: inspector.id,
         inspectorName: displayName,
         tenantSubdomain: branding?.bookingHost?.split('.')[0] ?? '',
-        siteKey: c.env.TURNSTILE_SITE_KEY ?? '',
+        siteKey: (c.env.TURNSTILE_SITE_KEY || c.env.BOT_PROTECTION_SITE_KEY) ?? '',
         style: variant,
     }));
 });
@@ -795,7 +795,7 @@ app.get('/book/:slug', async (c) => {
     const refRaw = c.req.query('ref');
     const agentRefSlug = refRaw && /^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/.test(refRaw) ? refRaw : undefined;
     return c.html(PublicBookingPage({
-        siteKey: c.env.TURNSTILE_SITE_KEY,
+        siteKey: c.env.TURNSTILE_SITE_KEY || c.env.BOT_PROTECTION_SITE_KEY,
         ...(branding ? { branding } : {}),
         embed,
         style,
@@ -816,7 +816,7 @@ app.get('/agreements/sign/:token', async (c) => {
         // Spec 5H P0 — append request.viewed to the audit chain (best-effort).
         try {
             await c.var.services.auditLog.append(request.tenantId, request.id, 'request.viewed', {
-                country: c.req.header('X-Geo-Country') || c.req.header('cf-ipcountry') || null,
+                country: c.req.header('X-Geo-Country') || null,
                 envelopeId: request.id,
                 ip: c.req.header('X-Forwarded-For')?.split(',')[0].trim() ||
                     c.req.header('X-Real-IP') || null,

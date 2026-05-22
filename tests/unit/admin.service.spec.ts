@@ -1,46 +1,46 @@
-import { describe, it, expect, beforeEach, afterEach , vi } from 'vitest';
+// tests/unit/admin.service.spec.ts
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AdminService } from '../../src/services/admin.service';
 import { MockKV } from './mocks';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import { users, tenantInvites, inspections, inspectionAgreements, tenants, templates } from '../../src/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import * as schema from '../../src/lib/db/schema';
 
 // Mock the drizzle-orm/d1 module to return our in-memory SQLite DB
 describe('AdminService', () => {
     let adminService: AdminService;
     let mockKV: MockKV;
-    let testDb: BetterSQLite3Database<typeof schema>;
     let sqlite: any;
+    let drizzleDb: any;
 
     beforeEach(async () => {
-        const setup = createTestDb();
-        testDb = setup.db;
-        sqlite = setup.sqlite;
-        await setupSchema(sqlite);
         mockKV = new MockKV();
+        const testDb = createTestDb();
+        sqlite = testDb.sqlite;
+        drizzleDb = testDb.db;
         
         // Seed a default tenant to satisfy foreign keys
-        await testDb.insert(tenants).values({
+        await drizzleDb.insert(tenants).values({
             id: 't1',
             name: 'Test Tenant',
             subdomain: 'test',
             createdAt: new Date(),
         });
 
-        adminService = new AdminService({} as any, mockKV as any);
+        adminService = new AdminService(sqlite, mockKV);
     });
 
     afterEach(() => {
-        sqlite.close();
+        if (sqlite) {
+            sqlite.close();
+        }
         vi.clearAllMocks();
     });
 
     it('should list members and pending invites for a tenant', async () => {
         const tenantId = 't1';
         
-        await testDb.insert(users).values({
+        await drizzleDb.insert(users).values({
             id: 'u1',
             tenantId,
             email: 'admin@example.com',
@@ -49,7 +49,7 @@ describe('AdminService', () => {
             createdAt: new Date(),
         });
 
-        await testDb.insert(tenantInvites).values({ 
+        await drizzleDb.insert(tenantInvites).values({ 
             id: 'invite-456', 
             tenantId: 't1', 
             email: 'invite@example.com', 
@@ -70,7 +70,7 @@ describe('AdminService', () => {
         const result = await adminService.createInvite(tenantId, email, 'admin');
         expect(result.inviteId).toBeDefined();
 
-        const invite = await testDb.select().from(tenantInvites).where(eq(tenantInvites.id as any, result.inviteId)).get();
+        const invite = await drizzleDb.select().from(tenantInvites).where(eq(tenantInvites.id as any, result.inviteId)).get();
         expect(invite).toBeDefined();
         expect(invite!.email).toBe(email);
     });
@@ -80,7 +80,7 @@ describe('AdminService', () => {
         const clientEmail = 'client@privacy.com';
         
         // Seed inspector
-        await testDb.insert(users).values({
+        await drizzleDb.insert(users).values({
             id: 'u-insp',
             tenantId,
             email: 'inspector@test.com',
@@ -90,7 +90,7 @@ describe('AdminService', () => {
         });
 
         // Seed template
-        await testDb.insert(templates).values({
+        await drizzleDb.insert(templates).values({
             id: 'temp-1',
             tenantId,
             name: 'Test Template',
@@ -100,7 +100,7 @@ describe('AdminService', () => {
         });
 
         // Seed inspection
-        await testDb.insert(inspections).values({
+        await drizzleDb.insert(inspections).values({
             id: 'insp-1',
             tenantId,
             propertyAddress: '123 Privacy St',
@@ -115,7 +115,7 @@ describe('AdminService', () => {
 
         // Seed agreement
         // Note: signatureBase64 is NOT NULL in schema
-        await testDb.insert(inspectionAgreements).values({
+        await drizzleDb.insert(inspectionAgreements).values({
             id: 'agree-1',
             tenantId,
             inspectionId: 'insp-1',
@@ -127,11 +127,11 @@ describe('AdminService', () => {
         expect(result.matched).toBe(1);
         expect(result.deletedAgreements).toBe(1);
 
-        const insp = await testDb.select().from(inspections).where(eq(inspections.id as any, 'insp-1')).get();
+        const insp = await drizzleDb.select().from(inspections).where(eq(inspections.id as any, 'insp-1')).get();
         expect(insp).toBeDefined();
         expect(insp!.clientName).toBeNull();
 
-        const agree = await testDb.select().from(inspectionAgreements).where(eq(inspectionAgreements.id as any, 'agree-1')).get();
+        const agree = await drizzleDb.select().from(inspectionAgreements).where(eq(inspectionAgreements.id as any, 'agree-1')).get();
         expect(agree).toBeUndefined();
     });
 });

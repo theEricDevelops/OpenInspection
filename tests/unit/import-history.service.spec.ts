@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, } from 'vitest';
 import { ImportHistoryService } from '../../src/services/import-history.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import { tenantMarketplaceImportHistory } from '../../src/lib/db/schema/marketplace';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
@@ -39,14 +39,11 @@ describe('ImportHistoryService', () => {
     beforeEach(async () => {
         const setup = createTestDb();
         testDb = setup.db;
-        await setupSchema(setup.sqlite);
         await testDb.insert(schema.tenants).values([
             { id: TENANT, name: 'T', subdomain: 't', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
             { id: OTHER_TENANT, name: 'O', subdomain: 'o', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
         ]);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new ImportHistoryService({} as any, TENANT);
+        svc = new ImportHistoryService(setup.sqlite, TENANT);
     });
 
     it('lists tenant rows ordered by createdAt DESC', async () => {

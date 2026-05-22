@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, } from 'vitest';
 import { NotificationService } from '../../src/services/notification.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -27,10 +27,7 @@ describe('NotificationService', () => {
     beforeEach(async () => {
         const setup = createTestDb();
         testDb = setup.db;
-        await setupSchema(setup.sqlite);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new NotificationService({} as any);
+        svc = new NotificationService(setup.sqlite);
         await seedTenantAndUsers(testDb);
     });
 

@@ -186,7 +186,7 @@ Send a password reset link to the given email address. Always returns `200` — 
 { "success": true }
 ```
 
-A signed one-time token is stored in `TENANT_CACHE` KV with a 1-hour TTL. If `RESEND_API_KEY` is configured, an email is sent with the reset link. The link format is `{APP_BASE_URL}/reset-password?token=<token>`.
+A signed one-time token is stored in the cache (memory or Redis) with a 1-hour TTL. If `RESEND_API_KEY` is configured, an email is sent with the reset link. The link format is `{APP_BASE_URL}/reset-password?token=<token>`.
 
 ---
 
@@ -379,7 +379,7 @@ Mark an inspection as completed and email the report link to the client.
 ---
 
 #### `POST /api/inspections/:id/upload`
-Upload a photo to R2 storage for a specific checklist item.
+Upload a photo to object storage (local filesystem under `STORAGE_DIR` or S3-compatible bucket) for a specific checklist item.
 
 **Roles:** `owner`, `admin`, `inspector`
 
@@ -395,7 +395,7 @@ Upload a photo to R2 storage for a specific checklist item.
 ---
 
 #### `GET /api/inspections/files/:key`
-Proxy for serving a photo from R2. The key must start with the caller's `tenantId` (enforced server-side).
+Proxy for serving a photo from object storage. The key must start with the caller's `tenantId` (enforced server-side).
 
 ---
 
@@ -703,7 +703,7 @@ Returns `404` if the agreement does not exist or does not belong to the caller's
 ---
 
 #### `POST /api/admin/tenant-status` *(machine-to-machine)*
-Sync a tenant's billing tier and status. Called by the portal after every Stripe subscription event. Invalidates the tenant's KV cache entry so the updated record is applied on the next request.
+Sync a tenant's billing tier and status. Called by the portal after every Stripe subscription event. Invalidates the tenant's cache entry (memory/Redis) so the updated record is applied on the next request.
 
 **Auth:** `Authorization: Bearer {JWT_SECRET}` (shared secret, not a user JWT)
 

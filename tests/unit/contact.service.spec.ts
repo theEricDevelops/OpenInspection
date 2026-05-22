@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, } from 'vitest';
 import { ContactService } from '../../src/services/contact.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -17,8 +17,6 @@ describe('ContactService.listContacts inspectionCount', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         testDb = fixture.db;
-        await setupSchema(fixture.sqlite);
-
         await testDb.insert(schema.tenants).values([
             { id: TENANT_A, name: 'A', subdomain: 'a', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
             { id: TENANT_B, name: 'B', subdomain: 'b', status: 'active', deploymentMode: 'shared', tier: 'free', createdAt: new Date() },
@@ -34,7 +32,7 @@ describe('ContactService.listContacts inspectionCount', () => {
             { id: 'i-bob-ref', tenantId: TENANT_A, propertyAddress: '3 St', clientName: 'X', clientEmail: 'x@test.com', referredByAgentId: AGENT_BOB, date: '2026-06-03', status: 'draft', paymentStatus: 'unpaid', price: 0, agreementRequired: false, paymentRequired: false, createdAt: new Date() },
             { id: 'i-other-tenant', tenantId: TENANT_B, propertyAddress: '4 St', clientName: 'Jane', clientEmail: 'jane@test.com', date: '2026-06-04', status: 'draft', paymentStatus: 'unpaid', price: 0, agreementRequired: false, paymentRequired: false, createdAt: new Date() },
         ]);
-        svc = new ContactService({} as any);
+        svc = new ContactService(fixture.sqlite);
     });
 
     it('counts client inspections by clientEmail match within tenant', async () => {

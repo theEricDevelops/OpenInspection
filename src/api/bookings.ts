@@ -193,12 +193,14 @@ bookingsRoutes.openapi(createBookingRoute, async (c) => {
     const service = c.var.services.booking;
 
     // Bot Protection — always enforce when secret is configured
-    if (c.env.TURNSTILE_SECRET_KEY) {
-        if (!body.turnstileToken) throw Errors.Forbidden('Security verification token missing.');
+    const botSecret = c.env.BOT_PROTECTION_SECRET_KEY || c.env.TURNSTILE_SECRET_KEY;
+    if (botSecret) {
+        const token = body.botProtectionToken || body.turnstileToken;
+        if (!token) throw Errors.Forbidden('Security verification token missing.');
         const verifyUrl = c.env.BOT_PROTECTION_VERIFY_URL as string | undefined;
         const isValid = await service.verifyBotProtection(
-            body.turnstileToken,
-            c.env.TURNSTILE_SECRET_KEY,
+            token,
+            botSecret,
             verifyUrl,
         );
         if (!isValid) throw Errors.Forbidden('Security verification failed.');
@@ -547,9 +549,9 @@ bookingsRoutes.openapi(signAgreementRoute, async (c) => {
     const request = await svc.getRequestByToken(token);
     if (request) {
         try {
-            const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || null;
+            const ip = c.req.header('x-forwarded-for') || null;
             const ua = (c.req.header('user-agent') || '').slice(0, 200) || null;
-            const country = c.req.header('X-Geo-Country') || c.req.header('cf-ipcountry') || null;
+            const country = c.req.header('X-Geo-Country') || null;
             // Hash the signature image for cert reference (full image stored in DB)
             const sigBytes = (() => {
                 try {
@@ -586,8 +588,8 @@ bookingsRoutes.openapi(signAgreementRoute, async (c) => {
                 const { runSignCompletion } = await import('../workflows/sign-completion');
                 await runSignCompletion(
                     { requestId: request.id, tenantId: request.tenantId, token },
-                    c.env as any,
-                    c.env.PDF_RENDERER as any,
+                    c.env,
+                    c.env.PDF_RENDERER,
                 );
             } catch (e) {
                 logger.warn('sign-completion.failed', { requestId: request.id, error: (e as Error).message });
@@ -597,16 +599,16 @@ bookingsRoutes.openapi(signAgreementRoute, async (c) => {
 
     // Round 14 free-tier structured log — kept alongside the persisted audit
     // for redundancy in case D1 write fails after Workers commit.
-    logger.info('agreement.signed.audit', {
-        event: 'agreement.signed.audit',
-        token: token.slice(0, 8) + '…',
-        tenantId: signed.tenantId,
-        clientName: signed.clientName ?? null,
-        signedAt: new Date().toISOString(),
-        signerIp: c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || null,
-        signerUserAgent: (c.req.header('user-agent') || '').slice(0, 200) || null,
-        signerCountry: c.req.header('X-Geo-Country') || c.req.header('cf-ipcountry') || null,
-    });
+        logger.info('agreement.signed.audit', {
+            event: 'agreement.signed.audit',
+            token: token.slice(0, 8) + '…',
+            tenantId: signed.tenantId,
+            clientName: signed.clientName ?? null,
+            signedAt: new Date().toISOString(),
+            signerIp: c.req.header('x-forwarded-for') || null,
+            signerUserAgent: (c.req.header('user-agent') || '').slice(0, 200) || null,
+            signerCountry: c.req.header('X-Geo-Country') || null,
+        });
 
     // B3: in-app notification — fetch agreement name for richer title
     void ((async () => {
@@ -652,7 +654,7 @@ bookingsRoutes.openapi(signAgreementRoute, async (c) => {
                 })();
                 const verifyUrl = baseUrl ? `${baseUrl}/verify/${signed.id}` : `/verify/${signed.id}`;
                 const confirmationId = signed.id.replace(/-/g, '').slice(0, 8).toUpperCase();
-                const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || null;
+                const ip = c.req.header('x-forwarded-for') || null;
 
                 // Look up inspector record so we can CC them and append the
                 // Sprint B-4c signature footer.

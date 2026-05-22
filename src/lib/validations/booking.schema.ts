@@ -16,6 +16,7 @@ export const PublicBookingSchema = z.object({
     timeSlot: z.enum(['morning', 'afternoon', 'all-day', 'custom']).openapi({ example: 'morning' }),
     customTime: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time format (HH:mm)').optional().openapi({ example: '13:30' }),
     inspectorId: z.string().uuid().optional().openapi({ example: '550e8400-e29b-41d4-a716-446655440000' }),
+    botProtectionToken: z.string().optional().openapi({ example: '0.xtoken...' }),
     turnstileToken: z.string().optional().openapi({ example: '0.xtoken...' }),
     // Sprint 2 S2-2 — Multi-inspection per request. Customer can pick multiple
     // services in a single visit. When omitted (legacy single-service flow),

@@ -9,11 +9,14 @@ OpenInspection is designed to be edited directly — there is no plugin system o
 OpenInspection uses a dynamic branding system that supports both environment-level defaults and tenant-specific overrides.
 
 ### 1. Simple Branding (Env Vars & UI)
+
 The easiest way to change branding without editing code:
-- **Environment Variables**: Set `APP_NAME`, `PRIMARY_COLOR`, and `SUPPORT_EMAIL` in your `.dev.vars` or Cloudflare dashboard. This sets the global default for your instance.
+
+- **Environment Variables**: Set `APP_NAME`, `PRIMARY_COLOR`, and `SUPPORT_EMAIL` in your environment (`.env`, shell, or process manager). This sets the global default for your instance.
 - **Settings UI**: Log in as an admin and navigate to `/settings`. You can upload a logo and change the site name/colors directly. These values are stored in the database and override the environment defaults for that workspace.
 
 ### 2. Code Customization (Templates)
+
 If you need to change the **structure** or **layout** of the branding (e.g., adding a specific icon next to the title), edit `src/templates/layouts/main-layout.tsx` or `src/templates/components/header.tsx`.
 
 > [!NOTE]
@@ -49,7 +52,7 @@ All custom utilities and shared styles live in `src/styles/input.css`. This is t
 
 To change the brand color, find and replace `#6366f1` / `#4f46e5` (indigo-500/600) throughout `input.css`, then run `npm run css:build`.
 
-The compiled output is served as a static file at `/styles.css` via Cloudflare Workers Assets (`[assets] directory = "./public"` in `wrangler.toml`).
+The compiled output is served as a static file at `/styles.css` (copied into `public/` and served by the Node.js static-asset handler or your reverse proxy).
 
 ### Header & Footer
 
@@ -92,6 +95,7 @@ export const renderFooter = () => `
 The homepage is `src/templates/pages/home.template.ts`. Edit the hero headline, subheading, service cards, and any other sections directly in the template string.
 
 Key areas to customize:
+
 - Hero headline and subheading
 - Service card titles and descriptions
 - Testimonials (add a new section anywhere)
@@ -128,7 +132,7 @@ Inspection templates are stored in the `templates` database table. The `schema` 
 
 Each item gets a `status` dropdown (OK / Monitor / Defect), a `notes` text field, and a photo upload button in the field form automatically.
 
-**To create or edit templates:** Insert or update rows directly in D1 via the Cloudflare dashboard, or add a migration file:
+**To create or edit templates:** Insert or update rows directly via the SQLite CLI, `npm run db:generate` + migration, or the internal admin tools:
 
 ```sql
 -- migrations/0004_custom_template.sql
@@ -160,6 +164,7 @@ export function renderYourPage(): string {
 }
 ```
 
+...
 2. Register the route in `src/index.ts`:
 
 ```ts
@@ -244,4 +249,5 @@ const session = await stripe.checkout.sessions.create({
 return c.json({ url: session.url });
 ```
 
+...
 3. Add a real `GET /:id/payment-success` handler that verifies the Stripe session and updates `paymentStatus` to `'paid'`.

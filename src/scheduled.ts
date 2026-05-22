@@ -7,6 +7,7 @@ import { QBOService } from './services/qbo.service';
 import { InvoiceService } from './services/invoice.service';
 import { qboConnections } from './lib/db/schema/qbo';
 import { logger } from './lib/logger';
+import { ScheduledEvent, ExecutionContext } from './types/portable';
 
 export interface ScheduledEnv {
     DB: SqliteDb;

@@ -1,46 +1,67 @@
 # CLAUDE.md — OpenInspection (Open Source Edition)
 
-The open-source inspection engine. A standalone Cloudflare Worker designed for simplicity and extensibility.
+The open-source inspection engine. A standalone Node.js application designed for simplicity and extensibility.
 
 **Docs**: `docs/architecture.md` · `docs/developers/` · `docs/inspectors/` · `docs/testing.md`
 
 ## Commands
 
+**Note**: All bash commands must be run in `wsl`
+
 ```bash
 npm install
 npm run dev          # Start local development server (port 8788)
 npm run css:watch    # Watch and compile Tailwind CSS
-npm run db:migrate   # Apply D1 migrations locally
+npm run db:generate  # Create a new migration after editing src/lib/db/schema/*.ts
+npm run db:delete    # Remove the local SQLite DB files (data/openinspection.db*)
+npm run db:build     # Create/repair the DB file by applying all migrations (no data loss on existing DB)
+npm run db:reset     # Full reset: delete DB + db:build (fresh DB with all 60+ migrations applied)
 npm run type-check   # Run TypeScript type checks
 npm run lint         # Lint the codebase
 npm run test:unit    # Run unit tests via Vitest
-npm run deploy       # Deploy to Cloudflare Workers
+npm run deploy       # Deploy using your preferred method (Docker, etc.)
 ```
+
+### Database Migrations
+
+- Schema definitions live in `src/lib/db/schema/` (one file per domain table, re-exported from `index.ts`).
+- **Creating a new migration**:
+  1. Edit the relevant `*.ts` file(s) in `src/lib/db/schema/`.
+  2. Run `npm run db:generate` (runs `drizzle-kit generate`).
+  3. Review the generated `migrations/00xx_*.sql` file (it will contain `--> statement-breakpoint` markers).
+  4. Commit the new `.sql` file + the updated `migrations/meta/_journal.json` + snapshot.
+- Migrations are applied automatically on `npm run dev` / `npm start` (and in tests) via `src/lib/db` (`initDb` / `applyMigrations` in `init.ts`).
+  The loader uses Drizzle's official journal for ordering + a tolerant raw executor so the historical pre-breakpoint migration files continue to work.
+- `npm run db:reset` is the supported way to get a completely clean local database.
 
 ## Key Files & Directories
 
 | File/Dir | Purpose |
-|---|---|
+| --- | --- |
 | `src/index.ts` | Hono app entry point and route configuration |
 | `src/api/` | API route handlers (Auth, Inspections, Bookings, etc.) |
-| `src/lib/db/` | Drizzle ORM schema and database utilities |
+| `src/lib/db/` | Drizzle ORM schema and database utilities (public API via `index.ts`) |
+| `scripts/db/` | Operational database tools (`db:build`, `db:delete`, `db:reset`) |
 | `src/lib/middleware/` | Hono middleware (Authentification, RBAC, etc.) |
 | `public/` | Static assets and compiled CSS |
-| `migrations/` | D1 database migration SQL files |
+| `migrations/` | SQLite database migration SQL files |
 
 ## Core Architecture
 
 ### Authentication
+
 - JWT-based authentication system (HS256, HttpOnly cookie `__Host-inspector_token`).
 - Supports both Cookie (for dashboard) and Bearer Header (for API) token delivery.
 - PBKDF2-SHA256 password hashing (100k iterations, 16-byte salt). Legacy SHA-256 hashes auto-rehashed on login.
 
 ### Standalone Engine (Single-Tenant)
+
 - Optimized for single-tenant deployments (Private Instances).
 - Resolves configuration via a fixed `SINGLE_TENANT_ID`.
 - Stable API surface designed to be extended by SaaS overlay branches (e.g., `saas` branch).
 
 ### Inspection Engine
+
 - JSON-schema based inspection templates.
 - Support for field results, e-signatures, and report generation.
 - Integrated public booking system with Turnstile bot protection.
@@ -48,11 +69,10 @@ npm run deploy       # Deploy to Cloudflare Workers
 ## Environment Variables
 
 | Variable | Required | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `JWT_SECRET` | Yes | Token signing key |
-| `DB` | Yes | Cloudflare D1 Database binding |
-| `PHOTOS` | Yes | Cloudflare R2 Bucket for image storage |
-| `TENANT_CACHE`| Yes | Cloudflare KV for configuration caching |
+| `DB_PATH` | Yes | Path to SQLite database file |
+| `STORAGE_DIR` | Yes | Directory for local object storage |
 | `TURNSTILE_SECRET_KEY` | No | Server-side Turnstile verification — `POST /api/book` enforces this when set. Use test secret `1x0000000000000000000000000000000AA` for local dev. |
 | `APP_BASE_URL` | No | Public URL for OAuth and link generation |
 | `RESEND_API_KEY`| No | Email delivery (via Resend.com) |
@@ -73,7 +93,7 @@ npm run deploy       # Deploy to Cloudflare Workers
 ---
 
 - **Framework**: [Hono](https://hono.dev/) with Zod OpenAPI.
-- **ORM**: [Drizzle ORM](https://orm.drizzle.team/) with D1.
+- **ORM**: [Drizzle ORM](https://orm.drizzle.team/) with SQLite.
 - **CSS**: [Tailwind CSS](https://tailwindcss.com/).
 - **Testing**: Vitest for unit tests; Playwright for E2E.
 
@@ -88,9 +108,9 @@ These rules are **mandatory** for any code that touches authentication. Violatio
 - **Cookie name**: Always use `__Host-inspector_token` (enforces `Secure`, `Path=/`, no `Domain`).
 - **setCookie attributes**: Every `setCookie()` MUST include `httpOnly: true, secure: true, sameSite: 'Strict', path: '/'`.
 - **deleteCookie secure**: Every `deleteCookie()` MUST include `{ path: '/', secure: true }`. Omitting `secure` on `__Host-` cookies throws a runtime exception.
-- **No localStorage tokens**: Frontend JS MUST NOT store tokens in `localStorage` or `document.cookie`. Same-origin `fetch()` sends the HttpOnly cookie automatically.
-- **KV invalidation**: On password change/reset/delete, write `pwchanged:{userId}` to KV. Auth middleware rejects tokens with `iat < changedAt`.
-- **D1 date safety**: Always use `safeISODate()` / `safeTimestamp()` from `src/lib/date.ts` when serializing DB date values. D1 returns mixed formats (Date, int, string).
+- **No localStorage tokens**: Frontend JS MUST NOT store tokens in `localStorage` or `document.cookie`. Same-origin `fetch()` sends the cookie automatically.
+- **Cache invalidation**: On password change/reset/delete, write `pwchanged:{userId}` to Cache. Auth middleware rejects tokens with `iat < changedAt`.
+- **SQLite date safety**: Always use `safeISODate()` / `safeTimestamp()` from `src/lib/date.ts` when serializing DB date values.
 
 ## Input Validation Rules
 

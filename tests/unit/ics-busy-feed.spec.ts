@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { IcsService } from '../../src/services/ics.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -16,7 +16,6 @@ describe('IcsService.busyFeedForInspector — Sprint C-2', () => {
         const fixture = createTestDb();
         testDb = fixture.db;
         sqlite = fixture.sqlite;
-        await setupSchema(sqlite);
 
         await testDb.insert(schema.tenants).values([{
             id: TENANT, name: 'A', subdomain: 'a', status: 'active',
@@ -44,8 +43,7 @@ describe('IcsService.busyFeedForInspector — Sprint C-2', () => {
             },
         ]);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new IcsService({} as unknown as any);
+        svc = new IcsService(fixture.sqlite);
     });
 
     afterEach(() => {

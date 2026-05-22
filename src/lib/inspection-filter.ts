@@ -74,6 +74,13 @@ function startOfWeek(d: Date): Date {
 function parseInspectionDate(raw: string | Date | null | undefined): Date | null {
     if (!raw) return null;
     if (raw instanceof Date) return Number.isNaN(raw.getTime()) ? null : raw;
+    // YYYY-MM-DD strings parsed by `new Date(str)` are treated as UTC midnight,
+    // which shifts by timezone offset. Parse as local date components instead.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+        const [y, m, d] = raw.split('-').map(Number);
+        const date = new Date(y, m - 1, d);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
     const d = new Date(raw);
     return Number.isNaN(d.getTime()) ? null : d;
 }

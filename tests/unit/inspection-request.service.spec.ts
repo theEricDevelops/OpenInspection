@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, beforeEach, } from 'vitest';
 import { InspectionRequestService } from '../../src/services/inspection-request.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -23,9 +23,7 @@ describe('InspectionRequestService (Sprint 2 S2-2)', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         testDb = fixture.db;
-        await setupSchema(fixture.sqlite);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        svc = new InspectionRequestService({} as any);
+        svc = new InspectionRequestService(fixture.sqlite);
 
         // Seed tenants + templates so create() can validate ownership.
         await testDb.insert(schema.tenants).values([

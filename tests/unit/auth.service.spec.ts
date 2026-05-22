@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach , vi } from 'vitest';
 import { AuthService } from '../../src/services/auth.service';
 import { verifyPassword } from '../../src/lib/password';
 import { MockKV } from './mocks';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import { users, tenantInvites, tenants } from '../../src/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
@@ -19,7 +19,6 @@ describe('AuthService', () => {
         const setup = createTestDb();
         testDb = setup.db;
         sqlite = setup.sqlite;
-        await setupSchema(sqlite);
         mockKV = new MockKV();
         
         // Seed a default tenant to satisfy foreign keys
@@ -30,7 +29,7 @@ describe('AuthService', () => {
             createdAt: new Date(),
         });
         
-        authService = new AuthService({} as any, mockKV as any);
+        authService = new AuthService(sqlite, mockKV as any);
     });
 
     afterEach(() => {

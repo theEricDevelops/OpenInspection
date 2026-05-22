@@ -12,9 +12,9 @@ All tests live in `tests/core.spec.ts`. Authentication uses real JWT tokens obta
 
 ## Prerequisites
 
-- Dev server must be running before tests start
+- Dev server must be running before tests start (`npm run dev`)
 - Node.js 18+
-- Local D1 migrations applied (`npm run db:migrate`)
+- SQLite schema applied (migrations run automatically on first `npm run dev` via `src/lib/db/init.ts`)
 
 ---
 
@@ -37,8 +37,7 @@ npm run test:e2e
 For a full run (all 128 tests), start from a **fresh database**:
 
 ```bash
-rm -rf .wrangler/state/v3/d1
-npm run db:migrate
+npm run db:reset   # or manually: rm -f test-e2e.db data/openinspection.db*
 npm run dev
 # then in another terminal:
 npx playwright test
@@ -187,7 +186,7 @@ The project distinguishes between your active development environment and the au
 | **Development** (`npm run dev`) | `8788` | `openinspection-db` (local) | Manual testing and UI development. |
 | **E2E Tests** (`npm run test:e2e`) | `8789` | `openinspection-db` (local) | Automated Playwright tests. |
 
-The `test:e2e` command automatically starts its own instance of Wrangler on port **8789**. This allows you to keep your dev server running on 8788 while tests run in isolation.
+The Playwright config (`playwright.config.ts`) automatically starts its own dev server instance (`tsx src/server.ts`) on port **8789** using a dedicated `test-e2e.db`. This allows you to keep your main dev server running on 8788 while tests run in isolation.
 
 The `tenantId` fallback in local dev is `'dev'` â€?the subdomain router skips the DB lookup when the subdomain matches `'dev'` or is absent. Demo data is served automatically by public endpoints in this mode.
 
@@ -195,10 +194,11 @@ The `tenantId` fallback in local dev is `'dev'` â€?the subdomain router skips
 
 ### Environment variables for local dev
 
-Copy the example file and fill in your values:
+Set variables in your shell, a `.env` file (loaded by tsx/dotenv), or the process environment. Example:
 
 ```bash
-cp .dev.vars.example .dev.vars
+export JWT_SECRET=fallback_secret_for_local_dev
+# ... other vars
 ```
 
 | Variable | Local dev value |
@@ -208,7 +208,7 @@ cp .dev.vars.example .dev.vars
 | `SENDER_EMAIL` | Any placeholder string |
 | `GEMINI_API_KEY` | Your real key, or leave blank to skip AI |
 | `STRIPE_SECRET_KEY` | Leave blank â€?mock checkout used if absent |
-| `TURNSTILE_SECRET_KEY` | **Required.** Use Cloudflare always-pass test secret: `1x0000000000000000000000000000000AA`. If absent, `POST /api/book` returns 500. |
+| `TURNSTILE_SECRET_KEY` | **Required.** Use the always-pass test secret: `1x0000000000000000000000000000000AA`. If absent, `POST /api/book` returns 500. |
 
 ---
 
@@ -270,14 +270,15 @@ npm run dev
 #    http://localhost:8788/api/calendar/connect
 #    â†?Google consent â†?redirects back to /dashboard?calendar=connected
 
-# 4. Extract the stored refresh token
-npx wrangler d1 execute openinspection-db --local \
-  --command "SELECT google_refresh_token FROM users LIMIT 1"
+# 4. Extract the stored refresh token (using sqlite3 CLI or Node)
+sqlite3 data/openinspection.db "SELECT google_refresh_token FROM users LIMIT 1"
+# or for the e2e DB:
+# sqlite3 test-e2e.db "SELECT ..."
 ```
 
 Copy the value â†?set as `INTEGRATION_GOOGLE_REFRESH_TOKEN`
 
-### Step 4 â€?Add to `.dev.vars`
+### Step 4 — Add to your environment (`.env` or exported shell vars)
 
 ```
 JWT_SECRET=fallback_secret_for_local_dev

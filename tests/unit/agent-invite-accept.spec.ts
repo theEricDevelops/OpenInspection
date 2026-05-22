@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AgentInviteAcceptPage } from '../../src/templates/pages/agent-invite-accept';
 import { AgentInviteExpiredPage } from '../../src/templates/pages/agent-invite-expired';
 import { AgentService } from '../../src/services/agent.service';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import type { EmailService } from '../../src/services/email.service';
@@ -111,8 +111,6 @@ describe('AgentService.resolveInvite + acceptInvite — A1', () => {
     beforeEach(async () => {
         const fixture = createTestDb();
         testDb = fixture.db;
-        await setupSchema(fixture.sqlite);
-
         await testDb.insert(schema.tenants).values({
             id: TENANT, name: 'Acme', subdomain: 'acme', status: 'active',
             deploymentMode: 'shared', tier: 'free', createdAt: new Date(),
@@ -125,7 +123,7 @@ describe('AgentService.resolveInvite + acceptInvite — A1', () => {
             sendAgentInvite: vi.fn().mockResolvedValue(undefined),
         };
         svc = new AgentService(
-            {} as any,
+            fixture.sqlite,
             stubEmail as unknown as EmailService,
             'https://acme.example.com',
         );

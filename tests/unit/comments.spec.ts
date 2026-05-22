@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { eq, and } from 'drizzle-orm';
 import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import { createTestDb, setupSchema } from './db';
+import { createTestDb } from './db';
 import * as schema from '../../src/lib/db/schema';
 import { comments, tenants } from '../../src/lib/db/schema';
 
@@ -24,8 +24,6 @@ describe('comments table — rating bucket + section', () => {
         const setup = createTestDb();
         testDb = setup.db;
         sqlite = setup.sqlite;
-        await setupSchema(sqlite);
-
         await testDb.insert(tenants).values({
             id: 't1',
             name: 'Test Tenant',
